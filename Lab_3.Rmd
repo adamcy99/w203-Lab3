@@ -1,0 +1,182 @@
+---
+title: "W203 Lab 3"
+author: "Armond Kok, Adam Yang, James De La Torre"
+output:
+  pdf_document:
+    fig_height: 4
+    fig_width: 6
+  html_document:
+    df_print: paged
+  'pdf_document:': default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60),tidy=TRUE)
+#opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+
+
+# NOTES
+
+Crime Rate: Include all but county numbers
+    • Standardize (min-max normalization), so everything is between 0-1
+    • Identify which ones have the strongest slope coefficient.
+        ○ Best variable will be the one that has the strongest
+    • Look at the marginal change in R^2 for each independent variable (exclude one at a time).
+Sort descending for marginal R^2
+
+
+
+
+
+# Introduction
+
+Our team has been hired by a local political campaign to research North Carolina crime statistics and generate suggestions for policies for reducing crime.
+
+The crime statistics data set being analyzed is a subset of the data used by Cornwell and W. Trumball in their 1994 study.  The data set contains the output variable, `crmrate`, which is crimes committed per capita, and it also contains 24 other variables which will be treated as input variables and potential modulators of the crime rate.
+
+We will attempt to build a linear model that regresses `crmrate` on some key variables in the data set.  We hope to identify variables that can be reasonably assessed as causal with respect to the crime rate.  From our model fidings, we will produce policy proposals which we believe can influence these variables and result in a decrease in crime.  
+
+It is important to note that just because a variable is found to correlate with the crime rate, it does not imply that the variable is useful from the perspective of a political campaign.  We may find variables that cannot be influenced by any political policy or action.  Such variables may improve the predictive ability of our model, but they will not be targeted for change by any policy proposals.
+
+
+# Exploratory Data Analysis
+
+
+
+The data file, `crime_v2.csv` was opened and found to contain 97 rows.  Each row represents data for a single county in North Carlolina.  Immediate inspection of the data revealed a few data cleanup steps were required.
+
+- The last 6 rows of the data set were blanks.  These empty records were deleted.
+- PROBABLY DELETE THIS LINE: One row had values of 1 for both `west` and `central`, placing that county in two regions simultaneously.  This is not possible, so this row was eliminated.
+- The `prbconv` variable, representing the "probability of conviction" was read in as a factor (a cateogorical variable) instead of a numeric variable.  This variable was converted to numeric.
+
+
+
+```{R}
+library(car)
+#library(reshape2)
+library(ggplot2)
+
+# define dir
+mydir<-"F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
+# read df
+crime_df = read.csv(paste0(mydir,'crime_v2.csv'))
+
+# summarize all vars
+summary(crime_df)
+
+str(crime_df)
+
+
+# get rid of rows with missing values (this only kills the 6 blank rows)
+crime_df<-crime_df[complete.cases(crime_df),]
+
+# convert prob of conviction to numeric
+crime_df$prbconv <- as.numeric(as.character(crime_df$prbconv))
+
+# eliminate row where west and central are both 1
+# TO DO.  JIM IDEA: just nullify the points, not the rows
+
+```
+
+
+### Outlier filtering
+
+Look through each column and identify outliers.
+plot histograms of variables that have outliers.
+- polpc (51)
+- prbarr (51)
+- wser (84)
+  - 
+- taxpc (25)
+
+
+Look through cols and manually choose "outliers"
+
+
+
+```{R}
+
+boxplot(crime_df$polpc)
+boxplot(crime_df$prbarr)
+boxplot(crime_df$wser)
+boxplot(crime_df$taxpc)
+
+# 1.5 IQR from the Q3 = outlier but we can decide which to eliminate
+```
+
+
+
+
+
+### Check for multicolinearity
+
+Build a correlation matrix.
+Identify input variables that correlate with one another. 
+Choose only one variable from each correlated pair to include in model-building.
+
+
+### Standardize
+
+```{R}
+
+# make a copy of crime_df for standardizing values
+std_crime_df <- cbind(crime_df)
+
+# a function to standardize values (fraction of range)
+standardize_values <- function(x){(x-min(x))/(max(x)-min(x))}
+
+# for all columns other than county number, year, and crime rate, standardize between 0 and 1
+for (col in 3:ncol(std_crime_df)) {
+  std_crime_df[,col] <- standardize_values(std_crime_df[,col])
+}
+
+summary(std_crime_df)
+
+```
+
+Now that we have standardized the units of all input variables, we can compute model slope coefficients that will be in comparable units.
+
+
+```{R}
+
+std_model <- lm(crmrte ~ . - county-year-crmrte, data = std_crime_df)
+
+plot(std_model)
+
+#summary(std_model)$r.squared
+```
+
+We look at initial plots and see some outliers on the residual vs leverage plot, exceed Cook's distance >0.5 and 1.0.
+Should we delete? just a single value in a col? whole row?  what variable is driving row as an outlier?
+
+
+Next: compute the model r^2 as we eliminate 1 variable at a time.
+
+```{R}
+#
+```
+
+
+Identify variables of interest.  Then, check if any of the identified variables are linearly related to one another.  If you find some that are, then we pick some to remove from the model.
+
+
+
+
+
+JIM: Comment about histograms of variables. make note of any anomalies in data like invalid values.
+
+JIM: Next talk about correlation matrix (I think we should show this).
+
+
+JIM QUESTIONS:
+
+- High-level question: Is our general policy to delete a datapoint if it has
+  any bad variables? (yes)
+- Are the prbarr and prbconv values supposed to be between o and 1? We have some values >1 (1,10).  Do we just delete?
+- Our report, should it just be a markdown file, not necessarily R markdown?  otherwise we will have to include every line of R code
+- Is it valid for west and central to both be 1 (we have 1 row)?  Is it valid for them both to be zero?
+
+
+
