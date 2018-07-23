@@ -155,7 +155,32 @@ Should we delete? just a single value in a col? whole row?  what variable is dri
 Next: compute the model r^2 as we eliminate 1 variable at a time.
 
 ```{R}
-#
+#base R-Squared
+base_model <- lm(crmrte~.-county-year-crmrte, data=std_crime_df)
+base_r2 <- summary(base_model)$r.squared
+
+#create list of variables for the for-loop
+var_names <- colnames(std_crime_df)
+remove <- c('county', 'year','crmrte')
+var_names <- var_names[! var_names %in% remove]
+
+#initiate an empty vector to store the marginal R-Squared
+var_r2_delta = c()
+
+#loop through the variable names and store the marginal R-Squared
+for (i in var_names) {
+    fmla <- as.formula(paste("crmrte ~ - crmrte +", paste(var_names[! var_names %in% i], collapse= "+")))
+    delta_model <- lm(fmla, data=crime_df)
+    r2_delta <- base_r2-summary(delta_model)$r.squared
+    var_r2_delta <- c(var_r2_delta, r2_delta)
+}
+
+#put the variable and marginal R-squared in a dataframe
+mar_r2_df <- data.frame(v1=var_names, v2=var_r2_delta)
+colnames(mar_r2_df) <- c('variable', 'marginalr2')
+
+#sort dataframe by marginal R-squared in a descending order
+mar_r2_df <- mar_r2_df[rev(order(mar_r2_df$marginalr2)),]
 ```
 
 
