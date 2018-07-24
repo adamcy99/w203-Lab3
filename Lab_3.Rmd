@@ -1,6 +1,6 @@
 ---
 title: "W203 Lab 3"
-author: "Armond Kok, Adam Yang, James De La Torre"
+author: "Armand Kok, Adam Yang, James De La Torre"
 output:
   pdf_document:
     fig_height: 4
@@ -27,9 +27,6 @@ Crime Rate: Include all but county numbers
 Sort descending for marginal R^2
 
 
-
-
-
 # Introduction
 
 Our team has been hired by a local political campaign to research North Carolina crime statistics and generate suggestions for policies for reducing crime.
@@ -42,8 +39,6 @@ It is important to note that just because a variable is found to correlate with 
 
 
 # Exploratory Data Analysis
-
-
 
 The data file, `crime_v2.csv` was opened and found to contain 97 rows.  Each row represents data for a single county in North Carlolina.  Immediate inspection of the data revealed a few data cleanup steps were required.
 
@@ -80,7 +75,6 @@ crime_df$prbconv <- as.numeric(as.character(crime_df$prbconv))
 
 
 ### Outlier Identification
-
 
 After reviewing the distributions of the different variables, there were 4 variables had outliers, which is defined by anything that is more than Q3 + 1.5 IQR or Q1 - 1.5 IQR: 
 - polpc - row 51
@@ -170,7 +164,8 @@ plot(crime_df$wtrd, crime_df$wfed)
 plot(crime_df$wfed, crime_df$wfir)
 plot(crime_df$wfed+crime_df$wtrd+crime_df$wfir, crime_df$density)
 ```
-### Standardize
+### Standardize Independent Variables
+
 In order to compare the impacts of the different independent variables, the values of those variables needed to be standardized so that the slope coefficients are similar in scale (e.g. if the range of a variable is between 0 and 1, then the coefficient may be larger than that of a variable that ranges between 0-200). For the standardization, the variables were all scaled to range between 0 and 1, based on the min and max values.
 
 ```{R}
@@ -194,6 +189,7 @@ Now that we have standardized the units of all input variables, we can compute m
 
 
 ### Standardized Regression Model
+
 A multi variable regression model was created using the data set that has been standardized above. 
 
 Then the model was evaluated for potential high leverage/influence data points as well as potential biases.
@@ -202,13 +198,11 @@ In review the following findings were noted:
 - row 84 and 25 have a high Cook's distance and high standardized residuals, which means the data point can be problematic for the regression model. 
 - row 25 and 84 were also noted earlier to be an extreme outier for the wser variable. Thus based on this finding the point will be removed and the regression will be redone. 
 - Judging from the residuals vs. fitted plot the model may have some bias when the predicted value crmrte is between 0 to 0.04. Particularly the model tend to underpredict lower crmrates, and overpredict medium crmrte.
-- From the Normal Q-Q line, it looks like that majority of predictions follow the line, which is what is desired for the regression model.
-
+- From the Normal Q-Q line, it looks like that majority of predictions follow the line, indicating a normal and independent distribution.
 
 ```{R}
 #TODO clean out the warning
-temp = na.omit(std_crime_df)
-std_model <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data =  temp)
+std_model <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data =  std_crime_df)
 
 plot(std_model)
 
@@ -216,25 +210,40 @@ plot(std_model)
 ```
 
 ```{R}
-summary(std_model)$coefficients
-summary(std_model)$r.squared
+std_crime_df2 <- std_crime_df[-c(84,25),]
+
+std_model2 <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data =  std_crime_df2)
+
+plot(std_model2)
 
 ```
 
-We look at initial plots and see some outliers on the residual vs leverage plot, exceed Cook's distance >0.5 and 1.0.
-Should we delete? just a single value in a col? whole row?  what variable is driving row as an outlier?
+In order to find which variables are most impactful to crmrte, the marginal R-squared against the standardized coefficients were reviewed. Based on the plots, the following variables were found to have the highest marginal R-squared and absolute slope coefficient:
+-prbarr
+-prbconv
+-polpc
+-density
+-pctmin80
 
-
-Next: compute the model r^2 as we eliminate 1 variable at a time.
 
 ```{R}
+coeff_df = data.frame(summary(std_model)$coefficients)
+#summary(std_model)$r.squared
+
 #base R-Squared
 base_model <- lm(crmrte~.-county-year-crmrte, data=std_crime_df)
 base_r2 <- summary(base_model)$r.squared
 
 #create list of variables for the for-loop
 var_names <- colnames(std_crime_df)
-remove <- c('county', 'year','crmrte')
+remove <- c('county',
+            'year',
+            'crmrte',
+            'urban',
+            'west',
+            'wtrd',
+            'wfed',
+            'wfir')
 var_names <- var_names[! var_names %in% remove]
 
 #initiate an empty vector to store the marginal R-Squared
@@ -253,28 +262,77 @@ mar_r2_df <- data.frame(v1=var_names, v2=var_r2_delta)
 colnames(mar_r2_df) <- c('variable', 'marginalr2')
 
 #sort dataframe by marginal R-squared in a descending order
-mar_r2_df <- mar_r2_df[rev(order(mar_r2_df$marginalr2)),]
+#mar_r2_df <- mar_r2_df[rev(order(mar_r2_df$marginalr2)),]
+
+plot(abs(coeff_df[-c(1),]$Estimate),mar_r2_df$marginalr2)
+
+subset(mar_r2_df, marginalr2 > .04)
 ```
 
+### Non-Standardized Regressions 
+The following is the model that contains almost all available variables as explanatory variables with the exception of variables we excluded due to potential multi-collinearity.
 
-Identify variables of interest.  Then, check if any of the identified variables are linearly related to one another.  If you find some that are, then we pick some to remove from the model.
+```{R}
+crime_df2 <- crime_df[-c(84,25),]
+
+model1 <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data = crime_df2)
+
+summary(model1)$r.squared
+summary(model1)$coefficients
+
+```
+
+The following is the model that contains a transformed explanatory variable.
+
+```{R}
+model_transform <- lm(crmrte ~ prbarr + log(prbconv) + density, data = crime_df2)
+
+summary(model_transform)$r.squared
+summary(model_transform)$coefficients
+```
+
+The following is the model that contains only variables that were identified to be most relevant to crmrte based on their marginal R-squared and standardized slope coefficient values.
+
+```{R}
+model_key <- lm(crmrte ~ prbarr + prbconv + polpc + density + pctmin80, data = crime_df2)
+
+summary(model_key)$r.squared
+summary(model_key)$coefficients
+```
+
+### Recommendation
+
+For interpretability purposes, the model was re-done using non-standardized variables:
+-prbarr
+-prbconv
+-polpc
+-density
+-pctmin80
+
+Recommendation for political campaign:
+- police per capita has a positive slope coefficient with crmrte, and this may be due to more police are present in areas with high crmrte. This suggests that purely hiring more police officers may not be an impactful solution.
+- However probability of arrest and conviction both have a negative slope coefficients. The model suggests that perhaps a zero tolerance policy towards crime is needed to increase arrests and convictions and thus deter crimes from happening.
+- In terms areas with large minority population and high density, since these variable cannot be changed that much, perhaps a community outreach (e.g. job training program, afterschool programs, tutor/mentor program) to educate areas with a lot of minority can be done, so that crimes can be reduced in those areas.
 
 
+### Omitted Variables
 
+Potential Omitted Variable #1: poverty_rate
+$$ crmrte = \beta_0 + \beta_1*density + \beta_2*poverty\_rate + u$$
+$$ poverty\_rate = \alpha_0 + \alpha_1*density +u $$
 
+- One thing that was noticeable in  the data is that crmrate was higher in dense areas and large minority population, however this may be due to an omitted variable that is not available in the data set. 
+- For example: in dense areas the cost of living may be much higher, which can explain why higher wages are correlated with dense areas, but because of the higher cost of living. Because of this, there may be a lot more people living under the poverty line, which would encourage them to commit crimes and hence why dense areas have higher crmrte.
+- so the density slope coefficient in this instance is probably higher than it should be $\beta_2$ and $\alpha_1$ would be positive.  
 
-JIM: Comment about histograms of variables. make note of any anomalies in data like invalid values.
+Potential Omitted Variable #2: discrimination
+$$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*discrimination $$
+$$ discrimination = \alpha_0 + \alpha_1*pctmin80 $$
+- Similarly minorities may be arrested for crimes more often than necessary due to discrimination. 
+- in this scenario $\beta_2$ and $alpha_1$ would be a positive value.
 
-JIM: Next talk about correlation matrix (I think we should show this).
-
-
-JIM QUESTIONS:
-
-- High-level question: Is our general policy to delete a datapoint if it has
-  any bad variables? (yes)
-- Are the prbarr and prbconv values supposed to be between o and 1? We have some values >1 (1,10).  Do we just delete?
-- Our report, should it just be a markdown file, not necessarily R markdown?  otherwise we will have to include every line of R code
-- Is it valid for west and central to both be 1 (we have 1 row)?  Is it valid for them both to be zero?
-
-
-
+Potential Omitted Variable #3: raised_in_oneparent_hh
+$$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*raised\_in\_2parents\_hh $$
+$$ raised\_in\_2parents\_hh = \alpha_0 + \alpha_1*pctmin80 $$
+- In this scenario, minorities may be more likely to be raised in a single parent house hold. Thus making them more likely to commit crimes. 
+- $\beta_2$ would be positive and $\alpha_1$ would be negative.
