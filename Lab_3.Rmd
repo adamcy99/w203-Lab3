@@ -48,18 +48,20 @@ It is important to note that just because a variable is found to correlate with 
 The data file, `crime_v2.csv` was opened and found to contain 97 rows.  Each row represents data for a single county in North Carlolina.  Immediate inspection of the data revealed a few data cleanup steps were required.
 
 - The last 6 rows of the data set were blanks.  These empty records were deleted.
-- PROBABLY DELETE THIS LINE: One row had values of 1 for both `west` and `central`, placing that county in two regions simultaneously.  This is not possible, so this row was eliminated.
+- One row had values of 1 for both `west` and `central`, placing that county in two regions simultaneously.  It is unknown whether this is possible, but currently there has been no reason to delete this particular row so the data will be kept for now, as evaluation of variable importance is still ongoing.
 - The `prbconv` variable, representing the "probability of conviction" was read in as a factor (a cateogorical variable) instead of a numeric variable.  This variable was converted to numeric.
-
-
 
 ```{R}
 library(car)
-#library(reshape2)
+library(reshape2)
 library(ggplot2)
 
 # define dir
-mydir<-"F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
+mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
+
+#jim's directory
+#mydir<- F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
+
 # read df
 crime_df = read.csv(paste0(mydir,'crime_v2.csv'))
 
@@ -74,41 +76,28 @@ crime_df<-crime_df[complete.cases(crime_df),]
 
 # convert prob of conviction to numeric
 crime_df$prbconv <- as.numeric(as.character(crime_df$prbconv))
-
-# eliminate row where west and central are both 1
-# TO DO.  JIM IDEA: just nullify the points, not the rows
-
 ```
 
 
-### Outlier filtering
-
-Look through each column and identify outliers.
-plot histograms of variables that have outliers.
-- polpc (51)
-- prbarr (51)
-- wser (84)
-  - 
-- taxpc (25)
+### Outlier Identification
 
 
-Look through cols and manually choose "outliers"
-
-
+After reviewing the distributions of the different variables, there were 4 variables had outliers, which is defined by anything that is more than Q3 + 1.5 IQR or Q1 - 1.5 IQR: 
+- polpc - row 51
+- prbarr - row 51
+- wser - row 84
+- taxpc row 25
+After reviewing further, there was no reason for the extreme outliers to be removed from the data set. boxplots of the variables above are shown below.
 
 ```{R}
 
-boxplot(crime_df$polpc)
-boxplot(crime_df$prbarr)
-boxplot(crime_df$wser)
-boxplot(crime_df$taxpc)
+boxplot(crime_df$polpc, main ='polpc')
+boxplot(crime_df$prbarr, main ='prbarr')
+boxplot(crime_df$wser, main = 'wser')
+boxplot(crime_df$taxpc, main = 'taxpc')
 
 # 1.5 IQR from the Q3 = outlier but we can decide which to eliminate
 ```
-
-
-
-
 
 ### Check for multicolinearity
 
@@ -116,8 +105,73 @@ Build a correlation matrix.
 Identify input variables that correlate with one another. 
 Choose only one variable from each correlated pair to include in model-building.
 
+```{R}
+#TODO - fix matrix sizing
 
+#correlation matrix for top 4 correlation and bottom 4 correlation
+cor_dr = cor(crime_df[c('prbarr',
+                        'prbpris',
+                        'prbconv',
+                        'avgsen',
+                        'polpc',
+                        'density',
+                        'taxpc',
+                        'west',
+                        'central',
+                        'urban',
+                        'pctmin80',
+                        'wcon',
+                        'wtuc',
+                        'wtrd',
+                        'wfir',
+                        'wser',
+                        'wmfg',
+                        'wfed',
+                        'wsta',
+                        'wloc',
+                        'mix',
+                        'pctymle')],
+              use = "complete.obs")
+
+# Heatmap
+ggplot(data = melt(cor_dr, na.rm = TRUE),
+       aes(Var2, Var1, fill = value))+
+theme_minimal()+ 
+geom_tile(color = 'white')+
+scale_fill_gradient2(low = 'blue',
+                     high = "orange",
+                     mid = 'white', 
+                     midpoint = 0,
+                     limit = c(-1,1),
+                     name= 'Correlation')+
+theme(axis.text.x = element_text(face='bold',
+                                 angle=90,
+                                 vjust = 1,
+                                 size =8,
+                                 hjust = 1),
+     axis.text.y = element_text(face='bold',
+                                size=8),
+     axis.title.x=element_blank(),
+     axis.title.y=element_blank())
+
+```
+One of the assumptions for multiple OLS regression is to avoid perfect multicollinearity between independent variables. This, however, is not common in practical cases. Less than perfect multicollinearity is a more common problem that will not cause bias in the OLS, but would introduce large variances and covariances. As a result, precise estimation would become difficult so it can be beneficial to remove certain imperfect multicollinearity variables.
+
+After reviewing the correlation matrix in detail, there were 5 pairs of variables that have a somewhat strong correlation to each other (i.e. has correlation > 0.6), which are plotted below. Based on the plots, then the following variables were removed from the final model:
+- urban - this is somewhat redundant with density.
+- west - west was removed because it is a dummy variable, and pctmin80 is a continuous one which may contain more information for the regression model.
+- wtrd, wfed, wfir - wages tend to be higher with density, so density was kept as it can succinctly represent the same information. Below are the scatterplots of the different correlated variables
+
+```{R}
+plot(crime_df$urban, crime_df$density)
+plot(crime_df$west, crime_df$pctmin80)
+plot(crime_df$wtrd, crime_df$wfir)
+plot(crime_df$wtrd, crime_df$wfed)
+plot(crime_df$wfed, crime_df$wfir)
+plot(crime_df$wfed+crime_df$wtrd+crime_df$wfir, crime_df$density)
+```
 ### Standardize
+In order to compare the impacts of the different independent variables, the values of those variables needed to be standardized so that the slope coefficients are similar in scale (e.g. if the range of a variable is between 0 and 1, then the coefficient may be larger than that of a variable that ranges between 0-200). For the standardization, the variables were all scaled to range between 0 and 1, based on the min and max values.
 
 ```{R}
 
@@ -128,7 +182,7 @@ std_crime_df <- cbind(crime_df)
 standardize_values <- function(x){(x-min(x))/(max(x)-min(x))}
 
 # for all columns other than county number, year, and crime rate, standardize between 0 and 1
-for (col in 3:ncol(std_crime_df)) {
+for (col in 4:ncol(std_crime_df)) {
   std_crime_df[,col] <- standardize_values(std_crime_df[,col])
 }
 
@@ -139,13 +193,32 @@ summary(std_crime_df)
 Now that we have standardized the units of all input variables, we can compute model slope coefficients that will be in comparable units.
 
 
-```{R}
+### Standardized Regression Model
+A multi variable regression model was created using the data set that has been standardized above. 
 
-std_model <- lm(crmrte ~ . - county-year-crmrte, data = std_crime_df)
+Then the model was evaluated for potential high leverage/influence data points as well as potential biases.
+
+In review the following findings were noted:
+- row 84 and 25 have a high Cook's distance and high standardized residuals, which means the data point can be problematic for the regression model. 
+- row 25 and 84 were also noted earlier to be an extreme outier for the wser variable. Thus based on this finding the point will be removed and the regression will be redone. 
+- Judging from the residuals vs. fitted plot the model may have some bias when the predicted value crmrte is between 0 to 0.04. Particularly the model tend to underpredict lower crmrates, and overpredict medium crmrte.
+- From the Normal Q-Q line, it looks like that majority of predictions follow the line, which is what is desired for the regression model.
+
+
+```{R}
+#TODO clean out the warning
+temp = na.omit(std_crime_df)
+std_model <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data =  temp)
 
 plot(std_model)
 
 #summary(std_model)$r.squared
+```
+
+```{R}
+summary(std_model)$coefficients
+summary(std_model)$r.squared
+
 ```
 
 We look at initial plots and see some outliers on the residual vs leverage plot, exceed Cook's distance >0.5 and 1.0.
