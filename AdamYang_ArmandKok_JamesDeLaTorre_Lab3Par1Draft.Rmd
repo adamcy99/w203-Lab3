@@ -17,26 +17,16 @@ knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60),tidy=TRUE)
 
 
 
-# NOTES
-
-Crime Rate: Include all but county numbers
-    • Standardize (min-max normalization), so everything is between 0-1
-    • Identify which ones have the strongest slope coefficient.
-        ○ Best variable will be the one that has the strongest
-    • Look at the marginal change in R^2 for each independent variable (exclude one at a time).
-Sort descending for marginal R^2
-
-
 # Introduction
 
-Our team has been hired by a local political campaign to research North Carolina crime statistics and generate suggestions for policies for reducing crime.
+Our team has been hired by a local political campaign to provide research on North Carolina crime statistics and generate policy suggestions for reducing crime.
 
-The crime statistics data set being analyzed is a subset of the data used by Cornwell and W. Trumball in their 1994 study.  The data set contains the output variable, `crmrate`, which is crimes committed per capita, and it also contains 24 other variables which will be treated as input variables and potential modulators of the crime rate.
+The crime statistics dataset provided for analysis is a subset of the data used by Cornwell and W. Trumball in their 1994 study. The dependent variable, of our study is the crimes commited per capita, given as `crmrate`, while there are 24 other variables in the dataset, each of which can be potential modulators of the crime rate. We aim to build a linear model that regresses `crmrate` on the key variables in the dataset. In particular, we are interested in examining the potential of the following policies in reducing crime rate:
+  * Policy to increase the police per capita of a county
+  * Policy to implement a more stringent arrest protocol
+  * Policy to enhance community outreach in high density and minority communities
 
-We will attempt to build a linear model that regresses `crmrate` on some key variables in the data set.  We hope to identify variables that can be reasonably assessed as causal with respect to the crime rate.  From our model fidings, we will produce policy proposals which we believe can influence these variables and result in a decrease in crime.  
-
-It is important to note that just because a variable is found to correlate with the crime rate, it does not imply that the variable is useful from the perspective of a political campaign.  We may find variables that cannot be influenced by any political policy or action.  Such variables may improve the predictive ability of our model, but they will not be targeted for change by any policy proposals.
-
+In addition, we aim to identify other factors that may reduce crime and attempt to fully explore other possible political strategies. Not all correlating variables will have an actionable solution, though their inclusion in the regression model will contribute to the accuracy of the model.
 
 # Exploratory Data Analysis
 
@@ -51,11 +41,14 @@ library(car)
 library(reshape2)
 library(ggplot2)
 
-# define dir
-mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
+# Adam's dir
+mydir <- "/Users/adamyang/Desktop/w203/Lab3/w203-Lab3/"
+
+# Armand's dir
+# mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
 
 #jim's directory
-#mydir<- F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
+# mydir<- F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
 
 # read df
 crime_df = read.csv(paste0(mydir,'crime_v2.csv'))
@@ -204,7 +197,9 @@ In review the following findings were noted:
 #TODO clean out the warning
 std_model <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data =  std_crime_df)
 
-plot(std_model)
+plot(std_model,1)
+plot(std_model,5)
+plot(std_model,2)
 
 #summary(std_model)$r.squared
 ```
@@ -214,7 +209,9 @@ std_crime_df2 <- std_crime_df[-c(84,25),]
 
 std_model2 <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data =  std_crime_df2)
 
-plot(std_model2)
+plot(std_model2,1)
+plot(std_model2,5)
+plot(std_model2,2)
 
 ```
 
@@ -300,6 +297,18 @@ summary(model_key)$r.squared
 summary(model_key)$coefficients
 ```
 
+### Stargazer Regression Table for Model Specifications
+
+```{R, results='asis'}
+library(stargazer)
+stargazer(model_transform, model_key, model1,
+          title = "Linear Models Parameters Predicting Crime Rate",
+          type = 'text', report = 'vc',
+          keep.stat = c('rsq', 'n'),
+          omit.table.layout = 'n')
+```
+
+
 ### Recommendation
 
 For interpretability purposes, the model was re-done using non-standardized variables:
@@ -323,7 +332,8 @@ $$ poverty\_rate = \alpha_0 + \alpha_1*density +u $$
 
 - One thing that was noticeable in  the data is that crmrate was higher in dense areas and large minority population, however this may be due to an omitted variable that is not available in the data set. 
 - For example: in dense areas the cost of living may be much higher, which can explain why higher wages are correlated with dense areas, but because of the higher cost of living. Because of this, there may be a lot more people living under the poverty line, which would encourage them to commit crimes and hence why dense areas have higher crmrte.
-- so the density slope coefficient in this instance is probably higher than it should be $\beta_2$ and $\alpha_1$ would be positive.  
+- so the density slope coefficient in this instance is probably higher than it should be $\beta_2$ and $\alpha_1$ would be positive.
+- Maybe tax revenue or wages can help proxy this omitted variable.
 
 Potential Omitted Variable #2: discrimination
 $$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*discrimination $$
@@ -336,3 +346,21 @@ $$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*raised\_in\_2parents\_hh $$
 $$ raised\_in\_2parents\_hh = \alpha_0 + \alpha_1*pctmin80 $$
 - In this scenario, minorities may be more likely to be raised in a single parent house hold. Thus making them more likely to commit crimes. 
 - $\beta_2$ would be positive and $\alpha_1$ would be negative.
+
+Potential Omitted Variable #4: unemployment
+
+$$ crmrte = \beta_0 + \beta_1*density + \beta_2*unemployment $$
+
+$$ unemployment = \alpha_0 + \alpha_1*density $$
+
+- Higher umployment = higher crime rate (beta2 > 0)
+- Higher density = higher unemployment (alpha1 > 0)
+- beta1 was positive, therefore, it might be higher than it should've been.
+
+Potential Omitted Variable #5: years_of_education
+
+$$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*years\_of\_education $$
+$$ years\_of\_education = \alpha_0 + \alpha_1*pctmin80 $$
+- Higher avg years of education for a county would result in lower crime rate, beta2 < 0
+- Higher percentage of minorities = lower average years of education for a county, alpha1 <0
+- $\beta_2*\alpha_1 > 0$, beta1 >0, therefore, it might be higher than it should've been.
