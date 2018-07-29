@@ -1,0 +1,567 @@
+---
+title: "W203 Lab 3"
+author: "Armand Kok, Adam Yang, James De La Torre"
+output:
+  pdf_document:
+    fig_height: 4
+    fig_width: 6
+  html_document:
+    df_print: paged
+  'pdf_document:': default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60),tidy=TRUE)
+#opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+
+
+# Introduction
+
+**Is the introduction clear? Is the research question specific and well defined? Could the research question
+lead to an actionable policy reccomendation? Does it motivate the analysis? Note that we’re not necessarily
+expecting a long introduction. Even a single paragraph is probably enough for most reports.**
+
+
+Our team has been hired by a local political campaign to provide research on North Carolina crime statistics and generate policy suggestions for reducing crime.
+
+The crime statistics dataset provided for analysis is a subset of the data used by Cornwell and W. Trumball in their 1994 study. The dependent variable, of our study is the crimes commited per capita, given as `crmrate`, while there are 24 other variables in the dataset, each of which can be potential modulators of the crime rate. We aim to build a linear model that regresses `crmrate` on the key variables in the dataset. In particular, we are interested in examining the potential of the following policies in reducing crime rate:
+  * Policy to increase the police per capita of a county
+  * Policy to implement a more stringent arrest protocol
+  * Policy to enhance community outreach in high density and minority communities
+
+In addition, we aim to identify other factors that may reduce crime and attempt to fully explore other possible political strategies. Not all correlating variables will have an actionable solution, though their inclusion in the regression model will contribute to the accuracy of the model.
+
+
+# 2.0 Data Loading and Cleaning
+
+
+TO DO: remove this instructiuon line
+**Did the team notice any anomalous values? Is there a sufficient justification for any data points that are
+removed? Did the report note any coding features that affect the meaning of variables (e.g. top-coding or
+bottom-coding)? Overall, does the report demonstrate a thorough understanding of the data?**
+
+
+The data provided is a sample from 91 counties in North Carolina, containing information from 1987.  The variables in the dataset and their meanings are shown below:
+
+|Variable|Label|
+|:------:|:---:|
+|county|county identifier|
+|year|1987|
+|crmrte|crimes committed per person|
+|prbarr|'probability' of arrest|
+|prbconv|'probability' of conviction|
+|prbpris|'probability' of prison sentence|
+|avgsen|avg. sentence, days|
+|polpc|police per capita|
+|density|people per sq. mile|
+|taxpc|tax revenue per capita|
+|west|=1 if in western N.C.|
+|central|=1 if in central N.C.|
+|urban|=1 if in SMSA|
+|pctmin80|perc. minority, 1980|
+|wcon|weekly wage, construction|
+|wtuc|wkly wge, trns, util, commun|
+|wtrd|wkly wge, whlesle, retail trade|
+|wfir|wkly wge, fin, ins, real est|
+|wser|wkly wge, service industry|
+|wmfg|wkly wge, manufacturing|
+|wfed|wkly wge, fed employees|
+|wsta|wkly wge, state employees|
+|wloc|wkly wge, local gov emps|
+|mix|offense mix: face-to-face/other|
+|pctymle|percent young male|
+
+
+## 2.1 Loading the Data
+
+
+The data file, `crime_v2.csv` was opened and found to contain 97 rows.
+
+```{R}
+# Import all libraries that will be used in the lab
+library(car)
+library(reshape2)
+library(ggplot2)
+library(stargazer)
+library(sandwich)
+library(lmtest)
+
+# Adam's dir
+#mydir <- "/Users/adamyang/Desktop/w203/Lab3/w203-Lab3/"
+
+# Armand's dir
+# mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
+
+#jim's directory
+mydir<- "F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
+
+# read df
+crime_df = read.csv(paste0(mydir,'crime_v2.csv'))
+```
+
+## 2.2 Data Cleanup
+
+Immediate inspection of the data revealed a few data cleanup steps were required.
+
+- The last 6 rows of the data set were blanks.  These empty records were deleted.
+- One row had values of 1 for both `west` and `central`, placing that county in two regions simultaneously.  It is unknown whether this is possible, but currently there has been no reason to delete this particular row so the data will be kept for now, as evaluation of variable importance is still ongoing.
+- The `prbconv` variable, representing the "probability of conviction" was read in as a factor (a cateogorical variable) instead of a numeric variable.  This variable was converted to numeric.
+
+```{R}
+
+# summarize all vars
+summary(crime_df)
+
+str(crime_df)
+
+
+# get rid of rows with missing values (this only kills the 6 blank rows)
+crime_df<-crime_df[complete.cases(crime_df),]
+
+# convert prob of conviction to numeric
+crime_df$prbconv <- as.numeric(as.character(crime_df$prbconv))
+```
+
+
+## 2.3 Outlier Identification
+
+TO DO: Write function that computes outliers by column
+
+After reviewing the distributions of the different variables, there were 4 variables had outliers, which is defined by anything that is more than Q3 + 1.5 IQR or Q1 - 1.5 IQR: 
+- polpc - row 51
+- prbarr - row 51
+- wser - row 84
+- taxpc row 25
+After reviewing further, there was no reason for the extreme outliers to be removed from the data set. boxplots of the variables above are shown below.
+
+```{R}
+
+boxplot(crime_df$polpc, main ='polpc')
+boxplot(crime_df$prbarr, main ='prbarr')
+boxplot(crime_df$wser, main = 'wser')
+boxplot(crime_df$taxpc, main = 'taxpc')
+
+# 1.5 IQR from the Q3 = outlier but we can decide which to eliminate
+```
+
+
+
+# 3.0 Model Building Process
+
+TO DO: remove this instruction text
+
+
+*Overall, is each step in the model building process supported by EDA? Is the outcome variable (or variables) appropriate? Is there a thorough univariate analysis of the outcome variable. Did the team identify at least two key explanatory variables and perform a thorough univariate analysis of each? Did the team clearly state why they chose these explanatory variables, does this explanation make sense in term of their research question? Did the team consider available variable transformations and select them with an eye towards model plausibility and interperability? Are transformations used to expose linear relationships in scatterplots? Is there enough explanation in the text to understand the meaning of each visualization?*
+
+
+TO DO: Mention we looked at histograms of each variable
+TO DO: Figure out where we want to mention statistical significance of calculated coefficients.  At end of each model section? after producing all models?
+
+
+
+## 3.1 Check for multicolinearity
+
+TO DO: clean up this sentence
+
+To understand the correlation of each variable in the dataset to crime rate and to detect any collinear relationships between explanatory variables, a correlation matrix was constructed as shown below.  This will be useful information as additional variables are added to intial models.
+
+Build a correlation matrix.
+Identify input variables that correlate with one another. 
+Choose only one variable from each correlated pair to include in model-building.
+
+```{R}
+#TODO - fix matrix sizing
+
+#correlation matrix for top 4 correlation and bottom 4 correlation
+cor_dr = cor(crime_df[c('prbarr',
+                        'prbpris',
+                        'prbconv',
+                        'avgsen',
+                        'polpc',
+                        'density',
+                        'taxpc',
+                        'west',
+                        'central',
+                        'urban',
+                        'pctmin80',
+                        'wcon',
+                        'wtuc',
+                        'wtrd',
+                        'wfir',
+                        'wser',
+                        'wmfg',
+                        'wfed',
+                        'wsta',
+                        'wloc',
+                        'mix',
+                        'pctymle')],
+              use = "complete.obs")
+
+# Heatmap
+ggplot(data = melt(cor_dr, na.rm = TRUE),
+       aes(Var2, Var1, fill = value))+
+theme_minimal()+ 
+geom_tile(color = 'white')+
+scale_fill_gradient2(low = 'blue',
+                     high = "orange",
+                     mid = 'white', 
+                     midpoint = 0,
+                     limit = c(-1,1),
+                     name= 'Correlation')+
+theme(axis.text.x = element_text(face='bold',
+                                 angle=90,
+                                 vjust = 1,
+                                 size =8,
+                                 hjust = 1),
+     axis.text.y = element_text(face='bold',
+                                size=8),
+     axis.title.x=element_blank(),
+     axis.title.y=element_blank())
+
+```
+One of the assumptions for multiple OLS regression is to avoid perfect multicollinearity between independent variables. This, however, is not common in practical cases. Less than perfect multicollinearity is a more common problem that will not cause bias in the OLS, but would introduce large variances and covariances. As a result, precise estimation would become difficult so it can be beneficial to remove certain imperfect multicollinearity variables.
+
+After reviewing the correlation matrix in detail, there were 5 pairs of variables that have a somewhat strong correlation to each other (i.e. has correlation > 0.6), which are plotted below. Based on the plots, then the following variables were removed from the final model:
+- urban - this is somewhat redundant with density.
+- west - west was removed because it is a dummy variable, and pctmin80 is a continuous one which may contain more information for the regression model.
+- wtrd, wfed, wfir - wages tend to be higher with density, so density was kept as it can succinctly represent the same information. Below are the scatterplots of the different correlated variables
+
+```{R}
+plot(crime_df$urban, crime_df$density)
+plot(crime_df$west, crime_df$pctmin80)
+plot(crime_df$wtrd, crime_df$wfir)
+plot(crime_df$wtrd, crime_df$wfed)
+plot(crime_df$wfed, crime_df$wfir)
+plot(crime_df$wfed+crime_df$wtrd+crime_df$wfir, crime_df$density)
+```
+
+
+## 3.2 Scatterplot Matrix
+
+To visualize the relationship between crime rate and our explanatory variables of interest, a scatterplot matrix was generated.
+
+
+```{R}
+
+spm(~crmrte + polpc + prbarr + density + pctmin80, data=crime_df)
+``` 
+
+
+The plots reveal that each of the selected explanatory variables shows a relationship with crime rate.  There is some degree of nonlinear relationship between `polpc` and `crmrte` and between `pctmin80` and `crmrte`.  However, transforming these variables would distort the practical interpretability of any model slope coefficients.  Therefore, the variables will not be transformed.
+
+
+
+
+
+
+
+
+
+# 4.0 Regression Models: Base Model
+
+The initial model created contains only the key variables mentioned above.
+
+```{R}
+
+model1 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 , data = crime_df)
+
+summary(model1)$r.squared
+summary(model1)$coefficients
+plot(model1, which=1)
+plot(model1, which=2)
+plot(model1, which=3)
+# Breusch-Pagan
+bptest(model1)
+#6.278e-5
+ncvTest(model1)
+
+plot(model1, which=5)
+
+```
+
+Analyzing the model against the six Classical Linear Model assumptions, the following observersation were made:
+
+TO DO: Put details around how to account for clustering in the sample (random sampling)
+TO DO: Interperse the plots where they are first mentioned.
+
+
+**1. Linear population model:** We haven't constrained the error term, so at this point there's nothing to check. 
+
+**2. Random Sampling:** To check random sampling, we need domain knowledge and an understanding of how the data were collected.  There are 100 counties in North Carolina, and there are data for 91 of them.  Without knowledge of the 9 excluded counties, no statement regarding the validity of random sampling can be made.
+
+**3. No perfect collinearity:** There is no need to explicitly check for perfect collinearity, because R would've reported a warning if this occurred.  The correlation matrix also shows there is no perfect collinearity.
+
+**4. Zero Conditional Mean:**  e(u|x)=0.  We can look at the diagnostic plots for to check this condition.  The residuals vs. fitted values plot for this model shows a relatively flat spline centered around zero, so we can assume that the zero conditional mean assumption holds.
+
+**5. Homoscedasticity:** The scale vs. location plot shows a slight slope across the range of fitted values.  Furthermore, the Breusch-Pagan test shows that the null hypothesis of homoscedasticity can be rejected.  When evaluating the statistical significance of calculated model coefficients, heteroscedastic-robust standard errors will be used.
+
+**6. Normality of errors:** To check normality of errors, the qqplot can be examined.  It shows a fairly normal distribution of residuals with the exception of points at the extreme ends of the distribution.  To account for this, the addition of other explanatory variables to the model will be examined.
+
+```{R}
+hist(model1$residuals, breaks=20)
+```
+TO DO: plot histogram of residuals
+
+
+## 4.1 Regression Model: Second Model
+
+*Does this model include covariates meant to increase the accuracy of the regression? Has the team justified inclusion of each of these additional variables? Does the team identify what they want to measure with each coefficient? Does the team interpret the result of the regression in a thorough and convincing manner. Does the team evaluate all 6 CLM assumptions? Are the conclusions they draw based on this evaluation appropriate? Did the team interpret the results in terms of their research question?*
+
+*One model that includes key explanatory variables and only covariates that you believe increase the accuracy of your results without introducing substantial bias (for example, you should not include outcome variables that will absorb some of the causal effect you are interested in). This model should strike a balance between accuracy and parsimony and reflect your best understanding of the determinants of crime.*
+
+
+
+```{R}
+
+# new: prbconv pctymle
+model2 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + prbconv + pctymle, data = crime_df)
+plot(model2)
+
+# Breusch-Pagan
+# 0.0004972
+
+```
+
+TO DO: Fill in discussion of CLM assumptions
+
+
+
+# 4.2 Regression Third model
+
+TO DO: add a lot of variables.  Consider colinearity that we discovered in correlation matrix in modeling section.
+
+
+
+
+
+# 4.3 Regression Table
+
+TO DO: Be sure to convert SE's to robust before displaying.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The following is the model that contains almost all available variables as explanatory variables with the exception of variables we excluded due to potential multi-collinearity.
+
+```{R}
+crime_df2 <- crime_df[-c(84,25),]
+
+model1 <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data = crime_df2)
+
+summary(model1)$r.squared
+summary(model1)$coefficients
+
+```
+
+The following is the model that contains a transformed explanatory variable.
+
+```{R}
+model_transform <- lm(crmrte ~ prbarr + log(prbconv) + density, data = crime_df2)
+
+summary(model_transform)$r.squared
+summary(model_transform)$coefficients
+```
+
+The following is the model that contains only variables that were identified to be most relevant to crmrte based on their marginal R-squared and standardized slope coefficient values.
+
+```{R}
+model_key <- lm(crmrte ~ prbarr + prbconv + polpc + density + pctmin80, data = crime_df2)
+
+summary(model_key)$r.squared
+summary(model_key)$coefficients
+```
+
+### Stargazer Regression Table for Model Specifications
+
+```{R, results='asis'}
+library(stargazer)
+stargazer(model_transform, model_key, model1,
+          title = "Linear Models Parameters Predicting Crime Rate",
+          type = 'text', report = 'vc',
+          keep.stat = c('rsq', 'n'),
+          omit.table.layout = 'n')
+```
+
+
+### Recommendation
+
+For interpretability purposes, the model was re-done using non-standardized variables:
+-prbarr
+-prbconv
+-polpc
+-density
+-pctmin80
+
+Recommendation for political campaign:
+- police per capita has a positive slope coefficient with crmrte, and this may be due to more police are present in areas with high crmrte. This suggests that purely hiring more police officers may not be an impactful solution.
+- However probability of arrest and conviction both have a negative slope coefficients. The model suggests that perhaps a zero tolerance policy towards crime is needed to increase arrests and convictions and thus deter crimes from happening.
+- In terms areas with large minority population and high density, since these variable cannot be changed that much, perhaps a community outreach (e.g. job training program, afterschool programs, tutor/mentor program) to educate areas with a lot of minority can be done, so that crimes can be reduced in those areas.
+
+
+### Omitted Variables
+
+Potential Omitted Variable #1: poverty_rate
+$$ crmrte = \beta_0 + \beta_1*density + \beta_2*poverty\_rate + u$$
+$$ poverty\_rate = \alpha_0 + \alpha_1*density +u $$
+
+- One thing that was noticeable in  the data is that crmrate was higher in dense areas and large minority population, however this may be due to an omitted variable that is not available in the data set. 
+- For example: in dense areas the cost of living may be much higher, which can explain why higher wages are correlated with dense areas, but because of the higher cost of living. Because of this, there may be a lot more people living under the poverty line, which would encourage them to commit crimes and hence why dense areas have higher crmrte.
+- so the density slope coefficient in this instance is probably higher than it should be $\beta_2$ and $\alpha_1$ would be positive.
+- Maybe tax revenue or wages can help proxy this omitted variable.
+
+Potential Omitted Variable #2: discrimination
+$$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*discrimination $$
+$$ discrimination = \alpha_0 + \alpha_1*pctmin80 $$
+- Similarly minorities may be arrested for crimes more often than necessary due to discrimination. 
+- in this scenario $\beta_2$ and $alpha_1$ would be a positive value.
+
+Potential Omitted Variable #3: raised_in_oneparent_hh
+$$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*raised\_in\_2parents\_hh $$
+$$ raised\_in\_2parents\_hh = \alpha_0 + \alpha_1*pctmin80 $$
+- In this scenario, minorities may be more likely to be raised in a single parent house hold. Thus making them more likely to commit crimes. 
+- $\beta_2$ would be positive and $\alpha_1$ would be negative.
+
+Potential Omitted Variable #4: unemployment
+
+$$ crmrte = \beta_0 + \beta_1*density + \beta_2*unemployment $$
+
+$$ unemployment = \alpha_0 + \alpha_1*density $$
+
+- Higher umployment = higher crime rate (beta2 > 0)
+- Higher density = higher unemployment (alpha1 > 0)
+- beta1 was positive, therefore, it might be higher than it should've been.
+
+Potential Omitted Variable #5: years_of_education
+
+$$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*years\_of\_education $$
+$$ years\_of\_education = \alpha_0 + \alpha_1*pctmin80 $$
+- Higher avg years of education for a county would result in lower crime rate, beta2 < 0
+- Higher percentage of minorities = lower average years of education for a county, alpha1 <0
+- $\beta_2*\alpha_1 > 0$, beta1 >0, therefore, it might be higher than it should've been.
+
+
+
+# TO BE SORTED LATER
+# TO BE SORTED LATER
+# TO BE SORTED LATER
+# TO BE SORTED LATER
+
+
+### Standardized Regression Model
+
+TO DO: Eliminate. Save the comments on the diagnostic plots for use in the non-standardized model analysis.
+
+A multi variable regression model was created using the data set that has been standardized above. 
+
+Then the model was evaluated for potential high leverage/influence data points as well as potential biases.
+
+In review the following findings were noted:
+- row 84 and 25 have a high Cook's distance and high standardized residuals, which means the data point can be problematic for the regression model. 
+- row 25 and 84 were also noted earlier to be an extreme outier for the wser variable. Thus based on this finding the point will be removed and the regression will be redone. 
+- Judging from the residuals vs. fitted plot the model may have some bias when the predicted value crmrte is between 0 to 0.04. Particularly the model tend to underpredict lower crmrates, and overpredict medium crmrte.
+- From the Normal Q-Q line, it looks like that majority of predictions follow the line, indicating a normal and independent distribution.
+
+```{R}
+#TODO clean out the warning
+std_model <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data =  std_crime_df)
+
+plot(std_model,1)
+plot(std_model,5)
+plot(std_model,2)
+
+#summary(std_model)$r.squared
+```
+
+```{R}
+std_crime_df2 <- std_crime_df[-c(84,25),]
+
+std_model2 <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data =  std_crime_df2)
+
+plot(std_model2,1)
+plot(std_model2,5)
+plot(std_model2,2)
+
+```
+
+TO DO: eliminate.
+
+In order to find which variables are most impactful to crmrte, the marginal R-squared against the standardized coefficients were reviewed. Based on the plots, the following variables were found to have the highest marginal R-squared and absolute slope coefficient:
+-prbarr
+-prbconv
+-polpc
+-density
+-pctmin80
+
+
+```{R}
+coeff_df = data.frame(summary(std_model)$coefficients)
+#summary(std_model)$r.squared
+
+#base R-Squared
+base_model <- lm(crmrte~.-county-year-crmrte, data=std_crime_df)
+base_r2 <- summary(base_model)$r.squared
+
+#create list of variables for the for-loop
+var_names <- colnames(std_crime_df)
+remove <- c('county',
+            'year',
+            'crmrte',
+            'urban',
+            'west',
+            'wtrd',
+            'wfed',
+            'wfir')
+var_names <- var_names[! var_names %in% remove]
+
+#initiate an empty vector to store the marginal R-Squared
+var_r2_delta = c()
+
+#loop through the variable names and store the marginal R-Squared
+for (i in var_names) {
+    fmla <- as.formula(paste("crmrte ~ - crmrte +", paste(var_names[! var_names %in% i], collapse= "+")))
+    delta_model <- lm(fmla, data=crime_df)
+    r2_delta <- base_r2-summary(delta_model)$r.squared
+    var_r2_delta <- c(var_r2_delta, r2_delta)
+}
+
+#put the variable and marginal R-squared in a dataframe
+mar_r2_df <- data.frame(v1=var_names, v2=var_r2_delta)
+colnames(mar_r2_df) <- c('variable', 'marginalr2')
+
+#sort dataframe by marginal R-squared in a descending order
+#mar_r2_df <- mar_r2_df[rev(order(mar_r2_df$marginalr2)),]
+
+plot(abs(coeff_df[-c(1),]$Estimate),mar_r2_df$marginalr2)
+
+subset(mar_r2_df, marginalr2 > .04)
+```
+
