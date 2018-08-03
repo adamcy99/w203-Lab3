@@ -24,7 +24,7 @@ lead to an actionable policy reccomendation? Does it motivate the analysis? Note
 expecting a long introduction. Even a single paragraph is probably enough for most reports.**
 
 
-Our team has been hired by a local political campaign to provide research on North Carolina crime statistics and generate policy suggestions for reducing crime.
+Our team has been hired by a local political campaign to provide research on North Carolina crime statistics and to generate policy suggestions for reducing crime.  Our candidate seeks to portray himself as being “pro-cop” and “tough on crime”, and he espouses strong policing and enforcement.  He also has a strong desire to understand the situations faced by the minority population within the state, and he has expressed a keen interest in understanding how minority communities are impacted by crime.
 
 The crime statistics dataset provided for analysis is a subset of the data used by Cornwell and W. Trumball in their 1994 study. The dependent variable, of our study is the crimes commited per capita, given as `crmrate`, while there are 24 other variables in the dataset, each of which can be potential modulators of the crime rate. We aim to build a linear model that regresses `crmrate` on the key variables in the dataset. In particular, we are interested in examining the potential of the following policies in reducing crime rate:
   * Policy to increase the police per capita of a county
