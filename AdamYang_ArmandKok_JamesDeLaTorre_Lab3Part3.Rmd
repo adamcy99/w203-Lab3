@@ -89,13 +89,13 @@ library(sandwich)
 library(lmtest)
 
 # Adam's dir
-#mydir <- "/Users/adamyang/Desktop/w203/Lab3/w203-Lab3/"
+mydir <- "/Users/adamyang/Desktop/w203/Lab3/w203-Lab3/"
 
 # Armand's dir
 # mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
 
 #jim's directory
-mydir<- "F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
+#mydir<- "F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
 
 # read df
 crime_df = read.csv(paste0(mydir,'crime_v2.csv'))
