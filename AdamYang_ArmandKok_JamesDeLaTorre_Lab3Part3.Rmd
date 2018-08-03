@@ -261,19 +261,22 @@ The plots reveal that each of the selected explanatory variables shows a relatio
 
 # 4.0 Regression Models: Base Model
 
-The initial model created contains only the key variables mentioned above.
+The initial model created contains only the key variables of: probability of arrest (prbarr), density, police per capita (polpc), and the percentage of minorities (pctmin80).
+TO DO: write a better intro for this model so there is better flow.
 
 ```{R}
+# TO DO: clean up this part of the code so we show only what we need. If we want to show coefficients/r.squared, we have to discuss them.
 
 model1 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 , data = crime_df)
 
 summary(model1)$r.squared
 summary(model1)$coefficients
-plot(model1, which=1)
-plot(model1, which=2)
-plot(model1, which=3)
+#plot(model1, which=1)
+#plot(model1, which=2)
+#plot(model1, which=3)
+
 # Breusch-Pagan
-bptest(model1)
+#bptest(model1)
 #6.278e-5
 ncvTest(model1)
 
@@ -287,23 +290,46 @@ TO DO: Put details around how to account for clustering in the sample (random sa
 TO DO: Interperse the plots where they are first mentioned.
 
 
-**1. Linear population model:** We haven't constrained the error term, so at this point there's nothing to check. 
+**CLM 1. Linear population model:** We don’t have to worry about this assumption at the moment because we haven’t constrained the error term. 
 
-**2. Random Sampling:** To check random sampling, we need domain knowledge and an understanding of how the data were collected.  There are 100 counties in North Carolina, and there are data for 91 of them.  Without knowledge of the 9 excluded counties, no statement regarding the validity of random sampling can be made.
+**CLM 2. Random Sampling:** To check random sampling, we need domain knowledge and an understanding of how the data were collected.  There are 100 counties in North Carolina, and there are data for 91 of them.  Without knowledge of the 9 excluded counties, no statement regarding the validity of random sampling can be made.
 
-**3. No perfect collinearity:** There is no need to explicitly check for perfect collinearity, because R would've reported a warning if this occurred.  The correlation matrix also shows there is no perfect collinearity.
+**CLM 3. No perfect multicollinearity:** There is no need to explicitly check for perfect collinearity, because R would've reported a warning if this occurred.  Furthermore, the correlation matrix shown in section "______" also shows that there is no perfect collinearity.
 
-**4. Zero Conditional Mean:**  e(u|x)=0.  We can look at the diagnostic plots for to check this condition.  The residuals vs. fitted values plot for this model shows a relatively flat spline centered around zero, so we can assume that the zero conditional mean assumption holds.
+**CLM 4. Zero Conditional Mean:**  $E(u|x)=0$. For this model, the residuals vs. fitted values plot shown below reveals a relatively flat spline centered around zero. Therefore, there does not seem to be a clear deviation from the zero conditional mean and the assumption holds.
 
-**5. Homoscedasticity:** The scale vs. location plot shows a slight slope across the range of fitted values.  Furthermore, the Breusch-Pagan test shows that the null hypothesis of homoscedasticity can be rejected.  When evaluating the statistical significance of calculated model coefficients, heteroscedastic-robust standard errors will be used.
+```{R}
+# Residuals vs. Fitted Plot
+plot(model1, which=1)
+```
 
-**6. Normality of errors:** To check normality of errors, the qqplot can be examined.  It shows a fairly normal distribution of residuals with the exception of points at the extreme ends of the distribution.  To account for this, the addition of other explanatory variables to the model will be examined.
+**CLM 5. Homoscedasticity:** In the residuals vs. fitted values plot shown in **CLM 4**, the data points seem to form a cone shape which suggests some heteroscedasticity. In the scale-location plot below, there seems to be a slight positive slope across the range of fitted values between 0.02 and 0.04. Furthermore, the Breusch-Pagan test shown below has a p-value of 6.278e-05 which indicates that the null hypothesis of homoscedasticity can be rejected.  When evaluating the statistical significance of calculated model coefficients, heteroscedastic-robust standard errors will be used.
+
+```{R}
+# Scale-Location Plot
+plot(model1, which=3)
+
+# Breusch-Pagan
+bptest(model1)
+```
+
+
+**CLM 6. Normality of errors:** In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. However, the standardized residuals show some deviation from the straight line at the extreme ends of the distribution. This suggests some skew to at the extreme ends of our residuals.
+
+```{R}
+# Q-Q plot of Standardized Residuals
+plot(model1, which=2)
+```
+
+To further verify this observation, a histogram of this model's residuals is shown below. The histogram shows approximate normality near the center of the distribution, but also some evidence of skewness; especially on the positive end. However, the Central Limit Theorem (CLT) claims that if the sample size is large enough we can assume that the residuals hae a normal sampling distribution. For distributions with a very strong skew, a much larger sample size may be required, but for minor skews as in this case, the rule of thumb is that the CLT can be applied when the sample size is greather than 30. The sample size used for this model is 91 which should be enough for the CLT to hold.
+
+TO DO: we did an ncvTest previously, should we mention it here?
 
 ```{R}
 hist(model1$residuals, breaks=20)
 ```
-TO DO: plot histogram of residuals
 
+TO DO: write a transition sentence into the second model.
 
 ## 4.1 Regression Model: Second Model
 
