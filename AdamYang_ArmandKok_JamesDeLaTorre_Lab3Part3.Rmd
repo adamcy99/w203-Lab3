@@ -36,7 +36,7 @@ In addition, we aim to identify other factors that may reduce crime and attempt 
 
 # 2.0 Data Loading and Cleaning
 
-
+TO DO: Look for any top-coding or bottom coding.
 TO DO: remove this instructiuon line
 **Did the team notice any anomalous values? Is there a sufficient justification for any data points that are
 removed? Did the report note any coding features that affect the meaning of variables (e.g. top-coding or
@@ -45,33 +45,23 @@ bottom-coding)? Overall, does the report demonstrate a thorough understanding of
 
 The data provided is a sample from 91 counties in North Carolina, containing information from 1987.  The variables in the dataset and their meanings are shown below:
 
-|Variable|Label|
-|:------:|:---:|
-|county|county identifier|
-|year|1987|
-|crmrte|crimes committed per person|
-|prbarr|'probability' of arrest|
-|prbconv|'probability' of conviction|
-|prbpris|'probability' of prison sentence|
-|avgsen|avg. sentence, days|
-|polpc|police per capita|
-|density|people per sq. mile|
-|taxpc|tax revenue per capita|
-|west|=1 if in western N.C.|
-|central|=1 if in central N.C.|
-|urban|=1 if in SMSA|
-|pctmin80|perc. minority, 1980|
-|wcon|weekly wage, construction|
-|wtuc|wkly wge, trns, util, commun|
-|wtrd|wkly wge, whlesle, retail trade|
-|wfir|wkly wge, fin, ins, real est|
-|wser|wkly wge, service industry|
-|wmfg|wkly wge, manufacturing|
-|wfed|wkly wge, fed employees|
-|wsta|wkly wge, state employees|
-|wloc|wkly wge, local gov emps|
-|mix|offense mix: face-to-face/other|
-|pctymle|percent young male|
+|**Variable**|**Label**|**Variable**|**Label**|
+|-------|----|------|--------|
+|**county**|county identifier   |**urban**|=1 if in SMSA|
+|**year**|1987   |**pctmin80**|perc. minority, 1980|
+|**crmrte**|crimes committed per person   |**wcon**|weekly wage, construction|
+|**prbarr**|'probability' of arrest **\***   |**wtuc**|wkly wge, trns, util, commun|
+|**prbconv**|'probability' of conviction **\***   |**wtrd**|wkly wge, whlesle, retail trade|
+|**prbpris**|'probability' of prison sentence **\***   |**wfir**|wkly wge, fin, ins, real est|
+|**avgsen**|avg. sentence, days   |**wser**|wkly wge, service industry|
+|**polpc**|police per capita   |**wmfg**|wkly wge, manufacturing|
+|**density**|people per sq. mile   |**wfed**|wkly wge, fed employees|
+|**taxpc**|tax revenue per capita   |**wsta**|wkly wge, state employees|
+|**west**|=1 if in western N.C.   |**wloc**|wkly wge, local gov emps|
+|**central**|=1 if in central N.C.   |**mix**|offense mix: face-to-face/other|
+|**pctymle**|percent young male|
+
+**\*** *These are not true probabilities that are limited between 0 and 1, but are rations instead. For example, `probconv` is the ratio of the number of convictions to the number of arrests, which can be larger than 1.*
 
 
 ## 2.1 Loading the Data
@@ -264,24 +254,33 @@ The plots reveal that each of the selected explanatory variables shows a relatio
 The initial model created contains only the key variables of: probability of arrest (prbarr), density, police per capita (polpc), and the percentage of minorities (pctmin80).
 TO DO: write a better intro for this model so there is better flow.
 
-```{R}
+```{R, results = 'asis'}
 # TO DO: clean up this part of the code so we show only what we need. If we want to show coefficients/r.squared, we have to discuss them.
+#TO DO: need results = asis?
 
 model1 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 , data = crime_df)
 
-summary(model1)$r.squared
-summary(model1)$coefficients
-#plot(model1, which=1)
-#plot(model1, which=2)
-#plot(model1, which=3)
+# Make a variable that will hold robust standard errors
+s_robust <-summary(model1)
 
-# Breusch-Pagan
-#bptest(model1)
-#6.278e-5
-ncvTest(model1)
+# Replace regular SE with the heteroskedasticity-consistent SEs
+# also replace t statistic and p values
+se_hc <- sqrt(diag(vcovHC(model1)))
+s_robust$coefficients[, 2] <- se_hc
+s_robust$coefficients[, 3] <- s_robust$coefficients[, 1] / s_robust$coefficients[, 2]
+s_robust$coefficients[, 4]<- 1- pt(s_robust$coefficients[, 3], df=nobs(model1)-1)
 
-plot(model1, which=5)
+stargazer(model1, type = "text",
+         se = se_hc, report = "vcstp",
+         omit.stat = "f", star.cutoffs = c(0.05,0.01,0.001))
 
+se.model1 <- sqrt(diag(vcovHC(model1)))
+stargazer(model1, title = "Base Model",type = "text", report = "vcstp", omit.stat = "f", se = se.model1, star.cutoffs = c(0.05,0.01,0.001))
+
+coeftest(model1, vcovHC)
+#summary(model1)$coefficients
+
+#TO DO: mention how we will analyze the statistical and practical significance of these coefficients in a later section
 ```
 
 Analyzing the model against the six Classical Linear Model assumptions, the following observersation were made:
@@ -330,6 +329,11 @@ hist(model1$residuals, breaks=20)
 ```
 
 TO DO: write a transition sentence into the second model.
+TO DO: Other evaluation - Cook's Distance
+
+```{R}
+plot(model1, which=5)
+```
 
 ## 4.1 Regression Model: Second Model
 
@@ -518,16 +522,16 @@ In review the following findings were noted:
 
 ```{R}
 #TODO clean out the warning
-std_model <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data =  std_crime_df)
+#std_model <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data =  std_crime_df)
 
-plot(std_model,1)
-plot(std_model,5)
-plot(std_model,2)
+#plot(std_model,1)
+#plot(std_model,5)
+#plot(std_model,2)
 
 #summary(std_model)$r.squared
 ```
 
-```{R}
+```
 std_crime_df2 <- std_crime_df[-c(84,25),]
 
 std_model2 <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data =  std_crime_df2)
@@ -548,7 +552,8 @@ In order to find which variables are most impactful to crmrte, the marginal R-sq
 -pctmin80
 
 
-```{R}
+```
+
 coeff_df = data.frame(summary(std_model)$coefficients)
 #summary(std_model)$r.squared
 
