@@ -24,14 +24,14 @@ lead to an actionable policy reccomendation? Does it motivate the analysis? Note
 expecting a long introduction. Even a single paragraph is probably enough for most reports.**
 
 
-Our team has been hired by a local political campaign to provide research on North Carolina crime statistics and to generate policy suggestions for reducing crime.  Our candidate seeks to portray himself as being “pro-cop” and “tough on crime”, and he espouses strong policing and enforcement.  He also has a strong desire to understand the situations faced by the minority population within the state, and he has expressed a keen interest in understanding how minority communities are impacted by crime.
+Our team has been hired by a local political campaign to provide research on North Carolina crime statistics and to generate policy suggestions for reducing crime. Our candidate seeks to portray herself as being “pro-cop” and “tough on crime”, and she espouses strong policing and enforcement.  She also has a strong desire to understand the situations faced by the minority population within the state, and she has expressed a keen interest in understanding how minority communities are impacted by crime.
 
 The crime statistics dataset provided for analysis is a subset of the data used by Cornwell and W. Trumball in their 1994 study. The dependent variable, of our study is the crimes commited per capita, given as `crmrate`, while there are 24 other variables in the dataset, each of which can be potential modulators of the crime rate. We aim to build a linear model that regresses `crmrate` on the key variables in the dataset. In particular, we are interested in examining the potential of the following policies in reducing crime rate:
   * Policy to increase the police per capita of a county
   * Policy to implement a more stringent arrest protocol
   * Policy to enhance community outreach in high density and minority communities
 
-In addition, we aim to identify other factors that may reduce crime and attempt to fully explore other possible political strategies. Not all correlating variables will have an actionable solution, though their inclusion in the regression model will contribute to the accuracy of the model.
+In addition, we aim to identify other factors that may reduce crime and attempt to fully explore other possible political strategies. Not all correlating variables will have an actionable solution, though their inclusion in the regression model will contribute to its accuracy.
 
 
 # 2.0 Data Loading and Cleaning
@@ -251,49 +251,23 @@ The plots reveal that each of the selected explanatory variables shows a relatio
 
 # 4.0 Regression Models: Base Model
 
-The initial model created contains only the key variables of: probability of arrest (prbarr), density, police per capita (polpc), and the percentage of minorities (pctmin80).
 TO DO: write a better intro for this model so there is better flow.
-
-```{R, results = 'asis'}
-# TO DO: clean up this part of the code so we show only what we need. If we want to show coefficients/r.squared, we have to discuss them.
-#TO DO: need results = asis?
-
-model1 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 , data = crime_df)
-
-# Make a variable that will hold robust standard errors
-s_robust <-summary(model1)
-
-# Replace regular SE with the heteroskedasticity-consistent SEs
-# also replace t statistic and p values
-se_hc <- sqrt(diag(vcovHC(model1)))
-s_robust$coefficients[, 2] <- se_hc
-s_robust$coefficients[, 3] <- s_robust$coefficients[, 1] / s_robust$coefficients[, 2]
-s_robust$coefficients[, 4]<- 1- pt(s_robust$coefficients[, 3], df=nobs(model1)-1)
-
-stargazer(model1, type = "text",
-         se = se_hc, report = "vcstp",
-         omit.stat = "f", star.cutoffs = c(0.05,0.01,0.001))
-
-se.model1 <- sqrt(diag(vcovHC(model1)))
-stargazer(model1, title = "Base Model",type = "text", report = "vcstp", omit.stat = "f", se = se.model1, star.cutoffs = c(0.05,0.01,0.001))
-
-coeftest(model1, vcovHC)
-#summary(model1)$coefficients
-
-#TO DO: mention how we will analyze the statistical and practical significance of these coefficients in a later section
-```
-
-Analyzing the model against the six Classical Linear Model assumptions, the following observersation were made:
-
 TO DO: Put details around how to account for clustering in the sample (random sampling)
 TO DO: Interperse the plots where they are first mentioned.
 
+The initial model created contains only those variables directly related to the candidate's positions on being pro-police, for strict enforcement, and concern with inner city and minority communities. Therefore, the variables we have chosen to represent these positions are: probability of arrest (prbarr), density, police per capita (polpc), and the percentage of minorities (pctmin80). 
 
-**CLM 1. Linear population model:** We don’t have to worry about this assumption at the moment because we haven’t constrained the error term. 
+```{R}
+model1 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 , data = crime_df)
+```
+
+After creating the model, we will start by evaluating it against the six Classical Linear Model assumptions.
+
+**CLM 1. Linear population model:** We do not have to worry about this assumption at the moment because we haven’t constrained the error term. 
 
 **CLM 2. Random Sampling:** To check random sampling, we need domain knowledge and an understanding of how the data were collected.  There are 100 counties in North Carolina, and there are data for 91 of them.  Without knowledge of the 9 excluded counties, no statement regarding the validity of random sampling can be made.
 
-**CLM 3. No perfect multicollinearity:** There is no need to explicitly check for perfect collinearity, because R would've reported a warning if this occurred.  Furthermore, the correlation matrix shown in section "______" also shows that there is no perfect collinearity.
+**CLM 3. No perfect multicollinearity:** There is no need to explicitly check for perfect collinearity, because R would've reported a warning if this occurred.  Furthermore, the correlation matrix shown in section "__TO DO____" also shows that there is no perfect collinearity.
 
 **CLM 4. Zero Conditional Mean:**  $E(u|x)=0$. For this model, the residuals vs. fitted values plot shown below reveals a relatively flat spline centered around zero. Therefore, there does not seem to be a clear deviation from the zero conditional mean and the assumption holds.
 
@@ -312,24 +286,43 @@ plot(model1, which=3)
 bptest(model1)
 ```
 
-
-**CLM 6. Normality of errors:** In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. However, the standardized residuals show some deviation from the straight line at the extreme ends of the distribution. This suggests some skew to at the extreme ends of our residuals.
+**CLM 6. Normality of errors:** In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. However, the standardized residuals show some deviation from the straight line at the extreme ends of the distribution. This suggests some skew at the extreme ends of our residuals. Furthermore, the Shapiro test shown below has a p value of 0.0002 which means we can reject the null hypothesis of the residuals having a normal distribution.
 
 ```{R}
 # Q-Q plot of Standardized Residuals
 plot(model1, which=2)
+
+shapiro.test(model1$residuals)
 ```
 
-To further verify this observation, a histogram of this model's residuals is shown below. The histogram shows approximate normality near the center of the distribution, but also some evidence of skewness; especially on the positive end. However, the Central Limit Theorem (CLT) claims that if the sample size is large enough we can assume that the residuals hae a normal sampling distribution. For distributions with a very strong skew, a much larger sample size may be required, but for minor skews as in this case, the rule of thumb is that the CLT can be applied when the sample size is greather than 30. The sample size used for this model is 91 which should be enough for the CLT to hold.
-
-TO DO: we did an ncvTest previously, should we mention it here?
+To further verify this observation, a histogram of this model's residuals is shown below. The histogram shows approximate normality near the center of the distribution, but also some evidence of skewness; especially on the positive end. However, the Central Limit Theorem (CLT) claims that if the sample size is large enough we can assume that the residuals have a normal sampling distribution. For distributions with a very strong skew, a much larger sample size may be required, but for minor skews as in this case, the rule of thumb is that the CLT can be applied when the sample size is greater than 30. The sample size used for this model is 91 which should be enough for the CLT to hold.
 
 ```{R}
 hist(model1$residuals, breaks=20)
 ```
 
+Based on our review of the six CLM assumptions, this is a valid linear model. We replaced the regular standard errors with the heteroskedasticity-robust standard errors. The resulting coefficients and parameters of the model are shown below:
+
+```{R, results = 'asis'}
+# TO DO: If we want to show coefficients/r.squared, we have to discuss them.
+
+# Replace regular Standard Errors with the heteroskedasticity-robust Standard Errors
+#se.model1 <- sqrt(diag(vcovHC(model1)))
+
+#TO DO: fix stargazer so it shows the t and p values
+
+#stargazer(model1, title = "Base Model",type = "text", report = "vcsp", omit.stat = "f", se = se.model1, star.cutoffs = c(0.05,0.01,0.001))
+
+coeftest(model1, vcovHC)
+
+#TO DO: mention how we will analyze the statistical and practical significance of these coefficients in a later section
+```
+
+The results of our initial model shows that the probability of arrest is statistically significant as a modulator of crime, while the density and minority percentage of each county are strongly statistically significant. The police per capita, on the other hand, is not. The slope coefficients tell us that for every 1 unit increase in `prbarr`, there is a corresponding 0.046 decrease in the crime rate. The model also suggests that by increasing the density of a county by 1 person per square mile, crime may rise by 0.008. 
+
 TO DO: write a transition sentence into the second model.
-TO DO: Other evaluation - Cook's Distance
+TO DO: Other evaluation - Cook's Distance plot(model1, 5)
+TO DO: If 1 % (or more) cases have residuals > 2.5, model contains too much error. If 5% (or more) of cases have residuals > 2, model has too much error and represents our data poorly. (standardized residuals)
 
 ```{R}
 plot(model1, which=5)
