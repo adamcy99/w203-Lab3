@@ -251,13 +251,10 @@ The plots reveal that each of the selected explanatory variables shows a relatio
 
 # 4.0 Regression Models: Base Model
 
-TO DO: write a better intro for this model so there is better flow.
-TO DO: Put details around how to account for clustering in the sample (random sampling)
-TO DO: Interperse the plots where they are first mentioned.
-
 The initial model created contains only those variables directly related to the candidate's positions on being pro-police, for strict enforcement, and concern with inner city and minority communities. Therefore, the variables we have chosen to represent these positions are: probability of arrest (prbarr), density, police per capita (polpc), and the percentage of minorities (pctmin80). 
 
 ```{R}
+# Creating initial model
 model1 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 , data = crime_df)
 ```
 
@@ -303,26 +300,27 @@ hist(model1$residuals, breaks=20)
 
 Based on our review of the six CLM assumptions, this is a valid linear model. We replaced the regular standard errors with the heteroskedasticity-robust standard errors. The resulting coefficients and parameters of the model are shown below:
 
-```{R, results = 'asis'}
-# TO DO: If we want to show coefficients/r.squared, we have to discuss them.
+```{R}
+
+# TO DO: Use this at the end (section 4.3)
 
 # Replace regular Standard Errors with the heteroskedasticity-robust Standard Errors
 #se.model1 <- sqrt(diag(vcovHC(model1)))
 
-#TO DO: fix stargazer so it shows the t and p values
+#stargazer(model1, title = "Base Model",type = "text", report = "vcstp", omit.stat = "f", se = list(se.model1, NULL), star.cutoffs = c(0.05,0.01,0.001))
 
-#stargazer(model1, title = "Base Model",type = "text", report = "vcsp", omit.stat = "f", se = se.model1, star.cutoffs = c(0.05,0.01,0.001))
-
+paste("adj.r.square:", summary(model1)$adj.r.squared)
 coeftest(model1, vcovHC)
 
-#TO DO: mention how we will analyze the statistical and practical significance of these coefficients in a later section
 ```
 
-The results of our initial model shows that the probability of arrest is statistically significant as a modulator of crime, while the density and minority percentage of each county are strongly statistically significant. The police per capita, on the other hand, is not. The slope coefficients tell us that for every 1 unit increase in `prbarr`, there is a corresponding 0.046 decrease in the crime rate. The model also suggests that by increasing the density of a county by 1 person per square mile, crime may rise by 0.008. 
+The adjusted r-squared of the model is relatively high at 0.66. This means that 66% of the variation in crime rate is explained by our input variables. Furthermore, the results of our initial model shows that the probability of arrest is statistically significant as a modulator of crime, while the density and minority percentage of each county are strongly statistically significant. The police per capita, on the other hand, is not. The slope coefficients tell us that for every 1 unit increase in `prbarr`, there is a corresponding 0.046 decrease in the crime rate. The model also suggests that by increasing the density of a county by 1 person per square mile, crime commited per person may rise by 0.008. Finally, for every percentage point increase of minorities in a county, crime commited per person may rise by 0.0003. The model also suggests that by increasing the police per capita by 1 will result in 5 additional crimes commited per person. However, this slope coefficeint is shown to be statistically insignificant.
 
-TO DO: write a transition sentence into the second model.
-TO DO: Other evaluation - Cook's Distance plot(model1, 5)
-TO DO: If 1 % (or more) cases have residuals > 2.5, model contains too much error. If 5% (or more) of cases have residuals > 2, model has too much error and represents our data poorly. (standardized residuals)
+To further assess the strength of our model, we can take a look at the residuals vs. leverage plot shown below. Here we can see that data point 51, has a Cook's distance greater than 1, meaning it has high influence over the model. As shown in section **2.3 TO DO** this data point has `polpc` and `prbarr` values multiple times higher than the next highest values for these variables. If this data point is not representative of the general population in North Carolina, then it may hurt the accuracy of our model. However, we investigated the other values of this county and could not justify removing this data point without further information.
+
+Furthermore, a general rule is that if 1 % (or more) data points have standardized residuals > 2.5, the model contains too much error. If 5% (or more) of data points have residuals > 2, the model has too much error and represents our data poorly. In the residual vs. leverage plot below, we see that 7.7% of our data points have standardized residuals over 2. Therefore, our model has too much error and may represent our data poorly.
+
+Because of this, we will now incorporate a few covariates that might increase the accuracy of our results. 
 
 ```{R}
 plot(model1, which=5)
