@@ -31,7 +31,7 @@ The crime statistics dataset provided for analysis is a subset of the data used 
   * Policy to implement a more stringent arrest protocol
   * Policy to enhance community outreach in high density and minority communities
 
-In addition, we aim to identify other factors that may reduce crime and attempt to fully explore other possible political strategies. Not all correlating variables will have an actionable solution, though their inclusion in the regression model will contribute to its accuracy.
+In addition, we aim to identify other factors that may influence crime and attempt to fully explore other possible political strategies. Not all correlating variables will have an actionable solution, though their inclusion in the regression model will contribute to its accuracy.
 
 
 # 2.0 Data Loading and Cleaning
@@ -45,23 +45,23 @@ bottom-coding)? Overall, does the report demonstrate a thorough understanding of
 
 The data provided is a sample from 91 counties in North Carolina, containing information from 1987.  The variables in the dataset and their meanings are shown below:
 
-|**Variable**|**Label**|**Variable**|**Label**|
-|-------|----|------|--------|
-|**county**|county identifier   |**urban**|=1 if in SMSA|
-|**year**|1987   |**pctmin80**|perc. minority, 1980|
-|**crmrte**|crimes committed per person   |**wcon**|weekly wage, construction|
-|**prbarr**|'probability' of arrest **\***   |**wtuc**|wkly wge, trns, util, commun|
-|**prbconv**|'probability' of conviction **\***   |**wtrd**|wkly wge, whlesle, retail trade|
-|**prbpris**|'probability' of prison sentence **\***   |**wfir**|wkly wge, fin, ins, real est|
-|**avgsen**|avg. sentence, days   |**wser**|wkly wge, service industry|
-|**polpc**|police per capita   |**wmfg**|wkly wge, manufacturing|
-|**density**|people per sq. mile   |**wfed**|wkly wge, fed employees|
-|**taxpc**|tax revenue per capita   |**wsta**|wkly wge, state employees|
-|**west**|=1 if in western N.C.   |**wloc**|wkly wge, local gov emps|
-|**central**|=1 if in central N.C.   |**mix**|offense mix: face-to-face/other|
+|**Variable**|**Label**|      |**Variable**|**Label**|
+|-------|----|----|------|--------|
+|**county**|county identifier   |      |**urban**|=1 if in SMSA|
+|**year**|1987   |     |**pctmin80**|perc. minority, 1980|
+|**crmrte**|crimes committed per person     |    |**wcon**|weekly wage, construction|
+|**prbarr**|'probability' of arrest **\***   |      |**wtuc**|wkly wge, trns, util, commun|
+|**prbconv**|'probability' of conviction **\***   |      |**wtrd**|wkly wge, whlesle, retail trade|
+|**prbpris**|'probability' of prison sentence **\***   |      |**wfir**|wkly wge, fin, ins, real est|
+|**avgsen**|avg. sentence, days   |      |**wser**|wkly wge, service industry|
+|**polpc**|police per capita   |      |**wmfg**|wkly wge, manufacturing|
+|**density**|people per sq. mile   |      |**wfed**|wkly wge, fed employees|
+|**taxpc**|tax revenue per capita   |      |**wsta**|wkly wge, state employees|
+|**west**|=1 if in western N.C.   |      |**wloc**|wkly wge, local gov emps|
+|**central**|=1 if in central N.C.   |      |**mix**|offense mix: face-to-face/other|
 |**pctymle**|percent young male|
 
-**\*** *These are not true probabilities that are limited between 0 and 1, but are rations instead. For example, `probconv` is the ratio of the number of convictions to the number of arrests, which can be larger than 1.*
+**\*** *These are not true probabilities that are limited between 0 and 1, but are ratios instead. For example, `probconv` is the ratio of the number of convictions to the number of arrests, which can be larger than 1.*
 
 
 ## 2.1 Loading the Data
@@ -78,14 +78,22 @@ library(stargazer)
 library(sandwich)
 library(lmtest)
 
+# TO DO: Eliminate these commented lines
 # Adam's dir
 #mydir <- "/Users/adamyang/Desktop/w203/Lab3/w203-Lab3/"
-
 # Armand's dir
-mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
-
+# mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
 #jim's directory
 #mydir<- "F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
+
+# Set directory based on who is running code
+if(file.exists("/Users/adamyang/")){
+    mydir <- "/Users/adamyang/Desktop/w203/Lab3/w203-Lab3/"
+} else if(file.exists("C:/Users/ak021523/")){
+    mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
+} else {
+    mydir<- "F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
+}
 
 # read df
 crime_df = read.csv(paste0(mydir,'crime_v2.csv'))
@@ -96,15 +104,14 @@ crime_df = read.csv(paste0(mydir,'crime_v2.csv'))
 Immediate inspection of the data revealed a few data cleanup steps were required.
 
 - The last 6 rows of the data set were blanks.  These empty records were deleted.
-- One row had values of 1 for both `west` and `central`, placing that county in two regions simultaneously.  It is unknown whether this is possible, but currently there has been no reason to delete this particular row so the data will be kept for now, as evaluation of variable importance is still ongoing.
+- One row had values of 1 for both `west` and `central`, placing that county in two regions simultaneously.  It is unknown whether this is possible, but currently there has been no reason to delete this particular row so the data will be kept for now.
 - The `prbconv` variable, representing the "probability of conviction" was read in as a factor (a cateogorical variable) instead of a numeric variable.  This variable was converted to numeric.
 
 ```{R}
 
-# summarize all vars
-summary(crime_df)
-
-str(crime_df)
+# Summary was performed to understand data.  Will not include in report text, however.
+#summary(crime_df)
+#str(crime_df)
 
 
 # get rid of rows with missing values (this only kills the 6 blank rows)
@@ -118,22 +125,23 @@ crime_df$prbconv <- as.numeric(as.character(crime_df$prbconv))
 ## 2.3 Outlier Identification
 
 TO DO: Write function that computes outliers by column
+TO DO: Do we really want to mention this loose definition of outliers? We likely have dozens of them.
 
-After reviewing the distributions of the different variables, there were 4 variables had outliers, which is defined by anything that is more than Q3 + 1.5 IQR or Q1 - 1.5 IQR: 
+After generating histograms to review the distributions of the different variables, four were found to have outliers (an outlier is defined as a data value that is more than Q3 + 1.5 IQR or Q1 - 1.5 IQR): 
 - polpc - row 51
 - prbarr - row 51
 - wser - row 84
 - taxpc row 25
+
 After reviewing further, there was no reason for the extreme outliers to be removed from the data set. boxplots of the variables above are shown below.
 
 ```{R}
 
-boxplot(crime_df$polpc, main ='polpc')
-boxplot(crime_df$prbarr, main ='prbarr')
-boxplot(crime_df$wser, main = 'wser')
-boxplot(crime_df$taxpc, main = 'taxpc')
+boxplot(crime_df$polpc, main ='Boxplot of polpc')
+boxplot(crime_df$prbarr, main ='Boxplot of prbarr')
+boxplot(crime_df$wser, main = 'Boxplot of wser')
+boxplot(crime_df$taxpc, main = 'Boxplot of taxpc')
 
-# 1.5 IQR from the Q3 = outlier but we can decide which to eliminate
 ```
 
 
@@ -146,23 +154,65 @@ TO DO: remove this instruction text
 *Overall, is each step in the model building process supported by EDA? Is the outcome variable (or variables) appropriate? Is there a thorough univariate analysis of the outcome variable. Did the team identify at least two key explanatory variables and perform a thorough univariate analysis of each? Did the team clearly state why they chose these explanatory variables, does this explanation make sense in term of their research question? Did the team consider available variable transformations and select them with an eye towards model plausibility and interperability? Are transformations used to expose linear relationships in scatterplots? Is there enough explanation in the text to understand the meaning of each visualization?*
 
 
-TO DO: Mention we looked at histograms of each variable
-TO DO: Figure out where we want to mention statistical significance of calculated coefficients.  At end of each model section? after producing all models?
 
-
-
-## 3.1 Check for multicolinearity
-
-TO DO: clean up this sentence
-
-To understand the correlation of each variable in the dataset to crime rate and to detect any collinear relationships between explanatory variables, a correlation matrix was constructed as shown below.  This will be useful information as additional variables are added to intial models.
-
-Build a correlation matrix.
-Identify input variables that correlate with one another. 
-Choose only one variable from each correlated pair to include in model-building.
+It is important to examine our outcome variable, `crmrte` before building any models.
 
 ```{R}
-#TODO - fix matrix sizing
+hist(crime_df$crmrte, main="Histogram of crmrte", breaks=30)
+```
+
+The histogram of `crmrte` shows some positive skew, but there are no extreme outliers.
+
+Given that our candidate is considering policies involving increasing the size of the police force, instituting stricter arrest protocols, and addressing issues of minorities in the inner cities, the police per capita (`polpc`), probability of arrest, (`prbarr`), population per square mile (`density`), and percent minority (`pctmin80`) variables will be examined more closely.  Histograms of these variables are shown below.
+
+```{R}
+hist(crime_df$polpc, main="Histogram of polpc", breaks=20)
+```
+
+The histogram of `polpc` shows the outlier point mentioned in the outlier identification section.
+
+```{R}
+hist(crime_df$prbarr, main="Histogram of prbarr", breaks=20)
+```
+The histogram of `prbarr` also shows an outlier point, which is the same outlier record for `polpc`.  
+
+```{R}
+hist(crime_df$density, main="Histogram of density", breaks=20)
+```
+Population density has a positive skew, which is likely due to the few counties with large cities.
+
+```{R}
+hist(crime_df$pctmin80, main="Histogram of pctmin80", breaks=20)
+```
+There are no outliers in the histogram of `pctmin80`.
+
+
+With the exception of the one record that is an outlier for both `polpc` and `prbarr`, the key variables in our dataset that most closely relate to our candidate's policy interests appear to have distributions that can be used for modeling without the need for any transformations.  As we build models, we will watch for high influence from the outlier record (#51).
+
+
+
+## 3.1 Scatterplot Matrix
+
+To visualize the relationship between crime rate and our explanatory variables of interest, a scatterplot matrix was generated.
+
+
+```{R}
+
+spm(~crmrte + polpc + prbarr + density + pctmin80, data=crime_df)
+``` 
+
+
+The plots reveal that each of the selected explanatory variables shows a relationship with crime rate.  There is some degree of nonlinear relationship between `polpc` and `crmrte` and between `pctmin80` and `crmrte`.  However, transforming these variables would distort the practical interpretability of any model slope coefficients.  Therefore, the variables will not be transformed.
+
+
+## 3.2 Check for multicolinearity
+
+Since additional variables may be included in other models for crime rate, it is important to identify those explanatory variables with a high degree of colinearity.  Perfectly colinear variables are prohibited in OLS regression, so in the unlikely event that any such variables are found, only 1 from each perfectly colinear group will be kept.  Less-than-perfect colinearity can still be problematic, adding variance to a model, so if any highly colinear groups of variables are identified, only one variable from each group will be kept.  This analysis will narrow down the set of candidate variables for inclusion in any models we may choose to build.
+
+To identify colinear variables, a correlation matrix was generated as shown below.
+
+```{R}
+#TO DO - fix matrix sizing
 
 #correlation matrix for top 4 correlation and bottom 4 correlation
 cor_dr = cor(crime_df[c('prbarr',
@@ -211,12 +261,14 @@ theme(axis.text.x = element_text(face='bold',
      axis.title.y=element_blank())
 
 ```
-One of the assumptions for multiple OLS regression is to avoid perfect multicollinearity between independent variables. This, however, is not common in practical cases. Less than perfect multicollinearity is a more common problem that will not cause bias in the OLS, but would introduce large variances and covariances. As a result, precise estimation would become difficult so it can be beneficial to remove certain imperfect multicollinearity variables.
 
-After reviewing the correlation matrix in detail, there were 5 pairs of variables that have a somewhat strong correlation to each other (i.e. has correlation > 0.6), which are plotted below. Based on the plots, then the following variables were removed from the final model:
-- urban - this is somewhat redundant with density.
-- west - west was removed because it is a dummy variable, and pctmin80 is a continuous one which may contain more information for the regression model.
-- wtrd, wfed, wfir - wages tend to be higher with density, so density was kept as it can succinctly represent the same information. Below are the scatterplots of the different correlated variables
+After reviewing the correlation matrix in detail, there were 5 pairs of variables that have a somewhat strong correlation to each other (i.e. has correlation > 0.6), which are plotted below. Based on the plots, the following variables were removed from the final model:
+
+- `urban` (82% correlation with `density`.  Kept `density` because it is a continuous variable providing more information than the categorical `urban` variable)
+- `west` (-64% correlation with `pctmin80`.  Kept `pctmin80` because it is continuous.)
+- `wtrd`, `wfed`, `wfir` (each of these had correlations >60% with eachother and/or with `density` or other wage columns.  Kept `density` as it can act as a proxy for the greatest number of other variables.)
+
+Below are the scatterplots of the different correlated variables.
 
 ```{R}
 plot(crime_df$urban, crime_df$density)
@@ -226,27 +278,6 @@ plot(crime_df$wtrd, crime_df$wfed)
 plot(crime_df$wfed, crime_df$wfir)
 plot(crime_df$wfed+crime_df$wtrd+crime_df$wfir, crime_df$density)
 ```
-
-
-## 3.2 Scatterplot Matrix
-
-To visualize the relationship between crime rate and our explanatory variables of interest, a scatterplot matrix was generated.
-
-
-```{R}
-
-spm(~crmrte + polpc + prbarr + density + pctmin80, data=crime_df)
-``` 
-
-
-The plots reveal that each of the selected explanatory variables shows a relationship with crime rate.  There is some degree of nonlinear relationship between `polpc` and `crmrte` and between `pctmin80` and `crmrte`.  However, transforming these variables would distort the practical interpretability of any model slope coefficients.  Therefore, the variables will not be transformed.
-
-
-
-
-
-
-
 
 
 # 4.0 Regression Models: Base Model
@@ -336,52 +367,93 @@ plot(model1, which=5)
 
 
 
+A second model was created which included the three original explanatory variables (probability of arrest, `prbarr`; population per square mile, `density`; and police per capita, `polpc`) plus two additional variables--the "probability" of conviction, `probconv` and percentage of a county's population comprised of young males `pctymle`.  The probability of conviction was selected based on the thought that if someone believes he is more likely to be convicted if he commits a crime, he may be less inclined to take the risk of committing a crime.  The percent young males variable was included because young males are responsible for a disproportionally large share of total crimes committed.  Including these variables should improve the accuracy of our inferences for crime rate.
+
+
 ```{R}
 
 # new: prbconv pctymle
 model2 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + prbconv + pctymle, data = crime_df)
-plot(model2)
+#plot(model2)
 
+# TO DO: why is this here?
 # Breusch-Pagan
 # 0.0004972
 
 ```
+This second model produced some unexpected results with respect to the linear model assumptions.  First, the residuals show more deviation from the zero conditional mean assumption than our previous model exhibited.  The residuals vs. fitted values plot below shows positive residuals for fitted values less than 0.015.  Perhaps there is an omitted variable responsible for this, or perhaps there is a nonlinear relationship between some of the variables in the model and crime rate.
 
-TO DO: Fill in discussion of CLM assumptions
+```{R}
+plot(model2, which=1, caption="", main="Residuals vs Fitted (Model 2)")
+```
+
+
+Heteroscedasticity of the second model appears to be greater than that of the first.  The Scale-Location plot for the second model is shown below, and it reveals higher standardized residuals for higher fitted values.   Using heteroscedastic-robust standard errors when evaluating the model coefficients should prevent this from being a problem.
+
+
+
+```{R}
+plot(model2, which=3, caption="", main="Scale-Location (Model 2)")
+```
+
+
+The summary of the second model's output is shown below.
+
+
+```{R}
+paste("Model 2 adj.r.square:", summary(model2)$adj.r.squared)
+coeftest(model2, vcovHC)
+```
+The second model has an adjusted r-squared value of 0.80, meaning 80% of the variation in crime rate is explained by the explanatory variables in the model.  The police per capita variable, `polpc`, which was not statistically significance in the first model is now significant in this second model.  As for the two variables added in the second model, the probability of conviction, `prbconv`, is highly statistically significant, while the percent young male, `pctymle`, variable, suprisingly, is not.
+
+In the second model, the slope coefficients can be interpreted as follows:
+
+- For every 1 percentage point increase in the probability of arrest, crime decreases by 0.0006 crimes per person.
+- For every 1 additional person per square mile, crime increases by 0.0056 crimes per person.
+- For every 1 additional police officer per person, crime increases by 7.7 crimes per person.
+- For every 1 percentage point increase in minority population, crime increases by 0.00037 crimes per person
+- For every 1 percentage point increase in probability of conviction, crime decreases by 0.00021 crimes per person.
+
 
 
 
 # 4.2 Regression Third model
-
-TO DO: add a lot of variables.  Consider colinearity that we discovered in correlation matrix in modeling section.
-is the increase signficant from model1 -> model2 -> model3
+The following is the model that contains almost all available variables as explanatory variables with the exception of variables we excluded due to high level of multi-collinearity.
 
 ```{R}
-#TO DO: Joint significance testing
-#joint significance test1
-#rest_model = model1, unrstr_model = model2
-
-#joint significance test2
-#rest_model = model2, unrstr_model = model3
-
-
-#model 3
-model3 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + log(wcon) + log(wtuc) + log(wtrd) + log(wfir) + log(wser) + log(wmfg) + log (wsta) + log(wloc), data = crime_df)
-
-#adjusted r-squared
-summary(model3)$adj.r.squared
-
-plot(model3)
-
-#waldtest since we have heteroskadsticity
-waldtest(model1, model3, vcov = vcovHC)
-
-#test coefficient significance
-coeftest(model3, vcov=vcovHC)
-
+model3 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + prbconv + pctymle + log(wcon) + log(wtuc) + log(wtrd) + log(wfir) + log(wser) + log(wmfg) +log(wfed) + log(wsta) + log(wloc) + log(wser) + taxpc + west + central + mix + prbpris + avgsen, data = crime_df)
 ```
 
+Model 3 for most part follows meets most of the CLM assumptions, however there are exceptions, and some other interesting points  discussed below.
 
+**CLM 5. Homoscedasticity:** 
+The Scale-Location plot below, and the Breusch-Pagan test result show that there is heteroscedacity present in the model. Based on this finding, heteroscedastic-robust standard errors will be used to perform any sort of statistical test for the model.
+
+```{R}
+#scale location plot
+plot(model3, which=3)
+
+#breusch-pagan test
+bptest(model3)
+```
+
+```{R}
+#print adj r squared
+paste("adj.r.square:", summary(model1)$adj.r.squared)
+
+#test coefficient significance
+coeftest(model3, vcov = vcovHC)
+```
+Compared to model 2, the adjusted R-squared is only marginally higher, this suggest that we will need to further evaluate the joint significance of the additional variables that were inclueded as part of model 3. In addition it looks like now `pctmyle`'s slope coefficient is considered signficant compared to model 2; the slope coefficient can be interpreted that a point increase in 'pctymle' corresponds to .11 increase in `crmrte`.
+
+**Other Analysis**
+The residuals vs. leverage plot shows that there are two data points (25 and 84), that have Cook's distance greater or equal to 1, indicating that they highly influence the regression. In looking at data point 84 further, there are several things that stand out: it has the highest `wser`, `prbconv`, and `pctmin80`. On the other hand point 25, highest `taxpc`. However, we investigated the other values of this county and could not justify removing this data point without further information. 
+
+Furthermore, in the residual vs. leverage plot below, we see that 7.7% of our data points have standardized residuals over 2. Therefore, our model has too much error and may represent our data poorly.
+
+```{R}
+plot(model3, which = 5)
+```
 
 
 # 4.3 Regression Table
@@ -415,12 +487,29 @@ TO DO: Be sure to convert SE's to robust before displaying.
 
 
 
+**Joint Signficance**
 
-
-
-The following is the model that contains almost all available variables as explanatory variables with the exception of variables we excluded due to potential multi-collinearity.
+In addition to the table above, we also tested the joint signficance of the model, to see if the variables that were added for model 2 and model 3 improved the fit in a statistically significant way.
 
 ```{R}
+#joint significance between model1 and model2
+waldtest(model1, model2, vcov = vcovHC)
+```
+As we can see above, the addition of 'probconv' and 'pctymle' are jointly significant, thus improving the fit of the model. Next we will further test to see if the remainder of the variables that were not included as part of model 2 can further improve the fit of the model.
+
+```{R}
+#joint significance between model1 and model2
+waldtest(model2, model3, vcov = vcovHC)
+
+summary(model2)$adj.r.squared
+summary(model3)$adj.r.squared
+```
+It does not look like the additional variable that were included as part of model 3 are jointly significant , did not improve the model in a statistically significant way.
+
+
+
+```{R}
+#TO DO: do we still need the code below or delete it?
 crime_df2 <- crime_df[-c(84,25),]
 
 model1 <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data = crime_df2)
@@ -433,6 +522,7 @@ summary(model1)$coefficients
 The following is the model that contains a transformed explanatory variable.
 
 ```{R}
+#TO DO: do we still need the code below or delete it?
 model_transform <- lm(crmrte ~ prbarr + log(prbconv) + density, data = crime_df2)
 
 summary(model_transform)$r.squared
@@ -442,6 +532,7 @@ summary(model_transform)$coefficients
 The following is the model that contains only variables that were identified to be most relevant to crmrte based on their marginal R-squared and standardized slope coefficient values.
 
 ```{R}
+#TO DO: do we still need the code below or delete it?
 model_key <- lm(crmrte ~ prbarr + prbconv + polpc + density + pctmin80, data = crime_df2)
 
 summary(model_key)$r.squared
