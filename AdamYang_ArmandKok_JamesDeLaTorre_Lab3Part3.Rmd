@@ -193,8 +193,6 @@ With the exception of the one record that is an outlier for both `polpc` and `pr
 
 ## 3.1 Scatterplot Matrix
 
-TO DO: Maybe this should go after we make histograms of the key variables.
-
 To visualize the relationship between crime rate and our explanatory variables of interest, a scatterplot matrix was generated.
 
 
@@ -209,7 +207,7 @@ The plots reveal that each of the selected explanatory variables shows a relatio
 
 ## 3.2 Check for multicolinearity
 
-Since additional variables may be included in other models for crime rate, it is important to identify those explanatory variables with a high degree of colinearity.  Perfectly colinear variables are prohibited in OLS regression, so in the unlikely event that any such variables are found, only 1 from each perfectly colinear group will be kept.  Less-than-perfect colinearity can still be problematic, adding variance to a model, so if any are identified, only one variable from each highly colinear group will be kept.  This analysis will narrow down the set of candidate variables for inclusion in any models we may choose to build.
+Since additional variables may be included in other models for crime rate, it is important to identify those explanatory variables with a high degree of colinearity.  Perfectly colinear variables are prohibited in OLS regression, so in the unlikely event that any such variables are found, only 1 from each perfectly colinear group will be kept.  Less-than-perfect colinearity can still be problematic, adding variance to a model, so if any highly colinear groups of variables are identified, only one variable from each group will be kept.  This analysis will narrow down the set of candidate variables for inclusion in any models we may choose to build.
 
 To identify colinear variables, a correlation matrix was generated as shown below.
 
@@ -280,13 +278,6 @@ plot(crime_df$wtrd, crime_df$wfed)
 plot(crime_df$wfed, crime_df$wfir)
 plot(crime_df$wfed+crime_df$wtrd+crime_df$wfir, crime_df$density)
 ```
-
-
-
-
-
-
-
 
 
 # 4.0 Regression Models: Base Model
@@ -376,9 +367,7 @@ plot(model1, which=5)
 
 
 
-A second model was created which included the three original explanatory variables (probability of arrest, `prbarr`; population per square mile, `density`; and police per capita, `polpc`) plus two additional variables--the "probability" of conviction, `probconv` and percentage of a county's population comprised of young males `pctymle`.  The probability of conviction was selected based on the thought that if someone believes he is more likely to be convicted if he commits a crime, he may be less inclined to take the risk and commit a crime.  The percent young males variable was included because young males are responsible for a disproportionally large share of total crimes committed.  Including these variables should improve the accuracy of our inferences for crime rate.
-
-
+A second model was created which included the three original explanatory variables (probability of arrest, `prbarr`; population per square mile, `density`; and police per capita, `polpc`) plus two additional variables--the "probability" of conviction, `probconv` and percentage of a county's population comprised of young males `pctymle`.  The probability of conviction was selected based on the thought that if someone believes he is more likely to be convicted if he commits a crime, he may be less inclined to take the risk of committing a crime.  The percent young males variable was included because young males are responsible for a disproportionally large share of total crimes committed.  Including these variables should improve the accuracy of our inferences for crime rate.
 
 
 ```{R}
@@ -387,6 +376,7 @@ A second model was created which included the three original explanatory variabl
 model2 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + prbconv + pctymle, data = crime_df)
 #plot(model2)
 
+# TO DO: why is this here?
 # Breusch-Pagan
 # 0.0004972
 
