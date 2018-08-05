@@ -469,14 +469,6 @@ plot(model3, which = 5)
 
 The regression table below shows the summary of the three models that were created.
 
-
-- `polpc` as it can be seen in the table, this variable only became significant after more variables were introduced in model 2 and 3, and it has a positive slope coefficient, which indicates that crime rate per person increases with more police. Campaigning for the increase of police force may not be a good idea.
-
-- `prbarr` became more significant, and the slope coefficient became more negative in model 2 and model 3. So the campaign might be better served on having tougher police than simply having more police 
-
-- `prbconv` when introduced to the model, this variable was significant, and it has a negative slope, indicating the higher probability of conviction is, the lower the crime rate becomes. So we can say that higher likelihood of conviction may be a deters people from comitting crime. 
-This is consistent with the campaign stance of being "tough on crime." The campaign may want to pursue a policy to better improve the district attorney's office, so that we can increase the probability of conviction.
-
 ```{R}
 # Replace regular Standard Errors with the heteroskedasticity-robust Standard Errors
 se.model1 <- sqrt(diag(vcovHC(model1)))
@@ -488,8 +480,13 @@ stargazer(model1, model2, model3, title = "Regression Models", type = "text", re
 
 ```
 
-discuss how the significant coefficients are change
+`polpc` as it can be seen in the table, this variable only became significant after more variables were introduced in model 2 and 3. This may be due to the omitted variable effect that `prbconv` had on `polpc`. We believe that higher `prbconv` would result in lower `crmrte` while higher `polpc` would result in higher `prbconv`. Therefore, the omitted variable bias would be negative and scale the OLS coefficient on `polpc` towards 0. This would cause the marginal effect of `polpc` to be underestimated. By introducing `prbconv` in model 2, we are negating this omitted variable bias which is why `polpc` became statistically significant. The slope coefficient of `polpc` has a positive slope which suggests that counties with higher police per capita would have a higher crime rate, which seems to be counter intuitive. It is possible that counties with higher crime rates are hiring more policemen in hopes of decreasing crime, but the presence of these extra policemen does not have the impact on crime rate that they hoped. Therefore increasing the police force may not be the most effective policy to decrease the crime rate
 
+`prbarr` became more significant, and the slope coefficient became more negative in model 2 and model 3. This may be due to the omitted variable effect that `prbconv` had on `prbarr`. We believe that higher `prbconv` would lead to lower `crmrte`, while higher `prbarr` would result in lower `prbconv`. This can be interpreted that being overzealous in arrest may lead to a lower conviction rate. Therefore, the omitted variable bias would be positive and scale the OLS coefficient on `prbarr` towards 0. This would cause the marginal effect of `prbarr` to be underestimated. By introducing `prbconv` in model 2, we are negating this omitted variable bias which is why `prbarr` became more statistically significant. So practically, the model suggests that we need to reach a level of balance between arrests and conviction.
+
+`prbconv` when introduced to the model, this variable was significant, and it has a negative slope. This indicates that a higher probability of conviction results in a lower crime rate. Practically, this means that a higher likelihood of conviction may deter people from comitting crime. 
+
+`pctymle` this variable did not become significant until model 3, when additional variables were introduced. This may be due to the nuance that the wage variables have, and how they might impact the young men population. Practically, this can be interpreted as: when wages are low and there is a high percentage of young men in a county, then the young men may have more incentive to commit crimes. There may be an omitted variable effect on the `pctymle` by the wages variables. Upon closer inspection of the various wage variables, `wsta`, `wser` and `wmfg` while not significant, do have negative slopes. From a practical stand point,perhaps young men tend to have state, service and/or manufacturing jobs, and the higher the wages for those three industries, the less incentive there is for the young men to commit crime.
 
 # 4.4 Model Selection
 **Joint Signficance**
@@ -631,6 +628,9 @@ TO DO: Cities have more drug abusers, fewer alchohol abusers
 TO DO: In Cities, larger percentage of minorities in cities abuse drugs, larger percentage of caucasians in rural areas abuse druges.
 
 Something that strongly stands out in all of these omitted variables is that the OLS coefficient on `pctmin80` is strongly impacted by omitted variable bias. It is possible that the marginal effect of the percentage of minorities on crime rate is entirely an artifact of omitted variable bias. 
+
+# 6.0 Conclusion
+This is consistent with the campaign stance of being "tough on crime." The campaign may want to pursue a policy to better improve the district attorney's office, so that we can increase the probability of conviction.
 
 # TO BE SORTED LATER
 # TO BE SORTED LATER
