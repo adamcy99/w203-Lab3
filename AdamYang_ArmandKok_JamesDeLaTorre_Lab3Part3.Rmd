@@ -352,36 +352,42 @@ TO DO: Fill in discussion of CLM assumptions
 
 
 # 4.2 Regression Third model
-
-TO DO: add a lot of variables.  Consider colinearity that we discovered in correlation matrix in modeling section.
-is the increase signficant from model1 -> model2 -> model3
+The following is the model that contains almost all available variables as explanatory variables with the exception of variables we excluded due to high level of multi-collinearity.
 
 ```{R}
-#TO DO: Joint significance testing
-#joint significance test1
-#rest_model = model1, unrstr_model = model2
-
-#joint significance test2
-#rest_model = model2, unrstr_model = model3
-
-
-#model 3
-model3 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + log(wcon) + log(wtuc) + log(wtrd) + log(wfir) + log(wser) + log(wmfg) + log (wsta) + log(wloc), data = crime_df)
-
-#adjusted r-squared
-summary(model3)$adj.r.squared
-
-plot(model3)
-
-#waldtest since we have heteroskadsticity
-waldtest(model1, model3, vcov = vcovHC)
-
-#test coefficient significance
-coeftest(model3, vcov=vcovHC)
-
+model3 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + prbconv + pctymle + log(wcon) + log(wtuc) + log(wtrd) + log(wfir) + log(wser) + log(wmfg) +log(wfed) + log(wsta) + log(wloc) + log(wser) + taxpc + west + central + mix + prbpris + avgsen, data = crime_df)
 ```
 
+Model 3 for most part follows meets most of the CLM assumptions, however there are exceptions, and some other interesting points  discussed below.
 
+**CLM 5. Homoscedasticity:** 
+The Scale-Location plot below, and the Breusch-Pagan test result show that there is heteroscedacity present in the model. Based on this finding, heteroscedastic-robust standard errors will be used to perform any sort of statistical test for the model.
+
+```{R}
+#scale location plot
+plot(model3, which=3)
+
+#breusch-pagan test
+bptest(model3)
+```
+
+```{R}
+#print adj r squared
+paste("adj.r.square:", summary(model1)$adj.r.squared)
+
+#test coefficient significance
+coeftest(model3, vcov = vcovHC)
+```
+Compared to model 2, the adjusted R-squared is only marginally higher, this suggest that we will need to further evaluate the joint significance of the additional variables that were inclueded as part of model 3. In addition it looks like now `pctmyle`'s slope coefficient is considered signficant compared to model 2; the slope coefficient can be interpreted that a point increase in 'pctymle' corresponds to .11 increase in `crmrte`.
+
+**Other Analysis**
+The residuals vs. leverage plot shows that there are two data points (25 and 84), that have Cook's distance greater or equal to 1, indicating that they highly influence the regression. In looking at data point 84 further, there are several things that stand out: it has the highest `wser`, `prbconv`, and `pctmin80`. On the other hand point 25, highest `taxpc`. However, we investigated the other values of this county and could not justify removing this data point without further information. 
+
+Furthermore, in the residual vs. leverage plot below, we see that 7.7% of our data points have standardized residuals over 2. Therefore, our model has too much error and may represent our data poorly.
+
+```{R}
+plot(model3, which = 5)
+```
 
 
 # 4.3 Regression Table
@@ -415,12 +421,29 @@ TO DO: Be sure to convert SE's to robust before displaying.
 
 
 
+**Joint Signficance**
 
-
-
-The following is the model that contains almost all available variables as explanatory variables with the exception of variables we excluded due to potential multi-collinearity.
+In addition to the table above, we also tested the joint signficance of the model, to see if the variables that were added for model 2 and model 3 improved the fit in a statistically significant way.
 
 ```{R}
+#joint significance between model1 and model2
+waldtest(model1, model2, vcov = vcovHC)
+```
+As we can see above, the addition of 'probconv' and 'pctymle' are jointly significant, thus improving the fit of the model. Next we will further test to see if the remainder of the variables that were not included as part of model 2 can further improve the fit of the model.
+
+```{R}
+#joint significance between model1 and model2
+waldtest(model2, model3, vcov = vcovHC)
+
+summary(model2)$adj.r.squared
+summary(model3)$adj.r.squared
+```
+It does not look like the additional variable that were included as part of model 3 are jointly significant , did not improve the model in a statistically significant way.
+
+
+
+```{R}
+#TO DO: do we still need the code below or delete it?
 crime_df2 <- crime_df[-c(84,25),]
 
 model1 <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data = crime_df2)
@@ -433,6 +456,7 @@ summary(model1)$coefficients
 The following is the model that contains a transformed explanatory variable.
 
 ```{R}
+#TO DO: do we still need the code below or delete it?
 model_transform <- lm(crmrte ~ prbarr + log(prbconv) + density, data = crime_df2)
 
 summary(model_transform)$r.squared
@@ -442,6 +466,7 @@ summary(model_transform)$coefficients
 The following is the model that contains only variables that were identified to be most relevant to crmrte based on their marginal R-squared and standardized slope coefficient values.
 
 ```{R}
+#TO DO: do we still need the code below or delete it?
 model_key <- lm(crmrte ~ prbarr + prbconv + polpc + density + pctmin80, data = crime_df2)
 
 summary(model_key)$r.squared
