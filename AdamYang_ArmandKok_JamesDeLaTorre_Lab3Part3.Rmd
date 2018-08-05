@@ -475,48 +475,66 @@ Recommendation for political campaign:
 - In terms areas with large minority population and high density, since these variable cannot be changed that much, perhaps a community outreach (e.g. job training program, afterschool programs, tutor/mentor program) to educate areas with a lot of minority can be done, so that crimes can be reduced in those areas.
 
 
-### Omitted Variables
+### Omitted Variables Discussion
 
-Potential Omitted Variable #1: poverty_rate
+Even by including all of the relevant variables provided in the data set to the linear regression, the resulting model may still be biased. This is because of potentially influential omitted variables that is either not provided, or is difficult to obtain. Below are some of the omitted variables that might be important along with how their absense may affect our results.
+
+Potential Omitted Variable #1: Financial Wellfare (Poverty Rate and Unemployment)
+
+We believe that an important driver of crime rate is the financial wellfare of the people. The following equations can help us determine how the omitted variable bias would impact our density coefficient:
+
 $$ crmrte = \beta_0 + \beta_1*density + \beta_2*poverty\_rate + u$$
 $$ poverty\_rate = \alpha_0 + \alpha_1*density +u $$
 
-- One thing that was noticeable in  the data is that crmrate was higher in dense areas and large minority population, however this may be due to an omitted variable that is not available in the data set. 
-- For example: in dense areas the cost of living may be much higher, which can explain why higher wages are correlated with dense areas, but because of the higher cost of living. Because of this, there may be a lot more people living under the poverty line, which would encourage them to commit crimes and hence why dense areas have higher crmrte.
-- so the density slope coefficient in this instance is probably higher than it should be $\beta_2$ and $\alpha_1$ would be positive.
-- Maybe tax revenue or wages can help proxy this omitted variable.
+We believe that higher poverty and unemployment rates will result in higher crime rate ($\beta_2$ > 0) as people are more desperate and will resort to crime in order to survive. Furthermore, in areas of high population density, there may be fewer jobs available as well as a higher poverty rate ($\alpha_1 > 0$). Therefore, the omitted variable bias ($\beta_2\alpha_1$) for both poverty rate and unemployment rate is positive, scaling the OLS coefficient on `density` away from zero (more positive). In other words, the marginal effect of `density` on crime rate may be overestimated, resulting in a magnified statistical significance.
 
-Potential Omitted Variable #2: discrimination
+Using the same analysis method on `pctmin80`, we theorize that in 1987, minorities tend to be more impoverished than their counterparts. Therefore, a larger percentage of minorities in a county, will likely result in higher poverty and unemployment rates ($\alpha_1 > 0$). In fact, we believe that there is a strong marginal effect of `pctmin80` on poverty rate, which means the omitted variable bias of poverty rate and unemployment rate would scale the OLS coefficient on `pctmin80` by a relatively large amount. This means that the marginal effect and statistical significance of `pctmin80` on crime rate may be highly overestimated.
+
+The tax revenue and various wage variables may help proxy these two omitted variables. However, we believe they are not very accurate proxies, especially for unemployment rate, because the unemployed are not paying income tax and do not have any wages at all.
+
+Potential Omitted Variable #2: Percent of Arrests Driven by Discrimination
+
+In 1987, and arguably even today, discrimination has unfortunately played a big role in the incarceration of certain minority groups. This can come in the form of false arrests, or disproportionate arrests for petty crimes and misdemeanors in minority communities. The higher the number of arrests driven by discrimination, the higher the reported crime rate would be ($\beta_2>0$). Furthermore, the higher the percentage of minorities in a county, the higher the number of arrests driven by discrimination would be ($\alpha_1 > 0$). Therefore, the omitted variable bias ($\beta_2\alpha_1$) of discrimination is positive, which would scale the OLS coefficient on `pctmin80` away from zero (more positive). This means that the marginal effect and statistical significance of `pctmin80` on crime rate may be overestimated.
+
 $$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*discrimination $$
 $$ discrimination = \alpha_0 + \alpha_1*pctmin80 $$
-- Similarly minorities may be arrested for crimes more often than necessary due to discrimination. 
-- in this scenario $\beta_2$ and $alpha_1$ would be a positive value.
 
-Potential Omitted Variable #3: raised_in_oneparent_hh
-$$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*raised\_in\_2parents\_hh $$
-$$ raised\_in\_2parents\_hh = \alpha_0 + \alpha_1*pctmin80 $$
-- In this scenario, minorities may be more likely to be raised in a single parent house hold. Thus making them more likely to commit crimes. 
-- $\beta_2$ would be positive and $\alpha_1$ would be negative.
+In addition, we believe that counties with a higher "probability" of arrest would also have a higher number of arrests driven by discrimination ($\alpha_1>0$). Therefore, the omitted variable bias is also positive in this case, which would scale the slope coefficient on `prbarr` away from zero (more positive). Therefore, the marginal effect and statistical significance of `prbarr` on crime rate may also be overestimated by omitting the effect of discrimination in the model.
 
-Potential Omitted Variable #4: unemployment
+The number of arrests driven by discrimination is very difficult to measure because very few policemen would admit to doing such a thing. Therefore, we unfortunately do not have any proxy variables to represent this omitted variable, except maybe `pctmin80`. However, using `pctmin80` as a representation of discrimination would be imperfect and making a lot of broad assumptions.
 
-$$ crmrte = \beta_0 + \beta_1*density + \beta_2*unemployment $$
+Potential Omitted Variable #3: Family Heath (Number of Parents, Amount of Abuse/Neglect, Availability of Positive Role Models)
 
-$$ unemployment = \alpha_0 + \alpha_1*density $$
+Another potentially strong influence on crime is family health. This can be possibly represented by the number of parents an individual has, the level of abuse and neglect that the individual suffers, and the availability of positive role models in the individual's life, among other things. There are so many complicated aspects to family health that it would be hard to accurately predict the effects of this omitted variable on the OLS coefficients. For the sake of simplicity, we will only explore the effects of having a two parent household as our omitted variable.
 
-- Higher umployment = higher crime rate (beta2 > 0)
-- Higher density = higher unemployment (alpha1 > 0)
-- beta1 was positive, therefore, it might be higher than it should've been.
+$$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*pct\_of\_2parents\_hh $$
+$$ pct\_of\_2parents\_hh = \alpha_0 + \alpha_1*pctmin80 $$
 
-Potential Omitted Variable #5: years_of_education
+We do not have a concrete understanding of whether children from two parent households are less likely to commit crime than children in single-parent households and orphans. Our subjective assumption is that it might be easier for two parents to provide good care for a child. For example, with two providers, the child would be less likely to live in poverty as well as possibly have more quality time with at least one of the parents. Therefore, the larger the percentage of two-parent households in a county, the lower the crime rate may be ($\beta_2 < 0$). According to kidscount.org, the percentage of African American children in single-parent households is 3 times larger than the percentage of Caucasian children in single-parent households in the State of North Carolina in 2005. Extrapolating from this, we will assume that counties with higher `pctmin80` would have lower percentage of two-parent households ($\alpha1<0$). Therefore, the omitted variable bias is positive, which would scale the slope coefficient on `pctmin80` away from zero (more positive). Thus, the marginal effect and statistical significance of `pctmin80` on crime rate may also be overestimated by omitting the effect of two-parent households in the model.
 
-$$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*years\_of\_education $$
-$$ years\_of\_education = \alpha_0 + \alpha_1*pctmin80 $$
-- Higher avg years of education for a county would result in lower crime rate, beta2 < 0
-- Higher percentage of minorities = lower average years of education for a county, alpha1 <0
-- $\beta_2*\alpha_1 > 0$, beta1 >0, therefore, it might be higher than it should've been.
+Potential Omitted Variable #4: Percentage of Highschool Graduates
 
+$$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*pct\_hs\_graduates $$
 
+$$ pct\_hs\_graduates = \alpha_0 + \alpha_1*pctmin80 $$
+
+The average years of education in a county may also be an important factor that influences crime rate. We assume that more graduation from highschool would result in a higher chance of employment at a higher paying job. Furthermore, time spent in school at a young age is believed to keep children out of trouble and away from bad influences. Therefore, a county with a higher percentage of highschool graduates may possibly have a lower crime rate ($\beta_2<0$). According to governing.com, the North Carolina highschool graduation rate of African Americans is 10% lower than the highschool graduation rate of Caucasians in 2011. By extrapolating this information, we assume that counties with higher percentage of minorities will have a lower percentage of highschool graduates ($\alpha_1<0$). This means that the omitted variable bias is positive, which would scale the slope coefficient on `pctmin80` away from zero (more positive). Thus, the marginal effect and statistical significance of `prbarr` on crime rate may also be overestimated by omitting the effect of education in the model.
+
+TO DO: Density?
+
+Potential Omitted Variable #5: Rate of Alchohol and Drug Abuse
+
+$$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*substance\_abuse $$
+$$ substance\_abuse = \alpha_0 + \alpha_1*pctmin80 $$
+
+The last omitted variable we considered is the Rate of substance abuse as an indicator of crime. We assume that counties with a higher rate of substance abuse would also have a higher crime rate because the usage of illegal drugs is a crime and the abuse of alchohol can lead to crime ($\beta_2>0$). The war on drugs lead to a vastly disproportionate rate of arrest in minority groups, which means that in 1987, it may be that a county with a larger percentage of minorities would have a higher rate of substance abuse ($\alpha_1$). This means that the omitted variable bias is positive, which would scale the slope coefficient on `pctmin80` away from zero (more positive). Thus, the marginal effect and statistical significance of `prbarr` on crime rate may also be overestimated by omitting the effect of substance abuse in the model.
+
+https://drugabuse.com/country-vs-city-addictions-differ-says-samhsa/
+https://www.samhsa.gov/specific-populations/racial-ethnic-minority
+TO DO: Cities have more drug abusers, fewer alchohol abusers
+TO DO: In Cities, larger percentage of minorities in cities abuse drugs, larger percentage of caucasians in rural areas abuse druges.
+
+Something that strongly stands out in all of these omitted variables is that the OLS coefficient on `pctmin80` is strongly impacted by omitted variable bias. It is possible that the marginal effect of the percentage of minorities on crime rate is entirely an artifact of omitted variable bias. 
 
 # TO BE SORTED LATER
 # TO BE SORTED LATER
