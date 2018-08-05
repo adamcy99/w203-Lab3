@@ -495,7 +495,7 @@ In addition to the table above, we also tested the joint signficance of the mode
 #joint significance between model1 and model2
 waldtest(model1, model2, vcov = vcovHC)
 ```
-As we can see above, the addition of 'probconv' and 'pctymle' are jointly significant, thus improving the fit of the model. Next we will further test to see if the remainder of the variables that were not included as part of model 2 can further improve the fit of the model.
+As we can see above, the addition of 'probconv' and 'pctymle' in model 2 is jointly significant, thus improving the fit of the model. Next we will further test to see if the remainder of the variables that were not included as part of model 2 can further improve the fit of the model.
 
 ```{R}
 #joint significance between model1 and model2
@@ -504,8 +504,7 @@ waldtest(model2, model3, vcov = vcovHC)
 summary(model2)$adj.r.squared
 summary(model3)$adj.r.squared
 ```
-It does not look like the additional variable that were included as part of model 3 are jointly significant , did not improve the model in a statistically significant way.
-
+The addition of variables in model 3 are not jointly significant when compared against model 2, meaning did not improve the fit of the model in a statistically significant way.
 
 
 ```{R}
