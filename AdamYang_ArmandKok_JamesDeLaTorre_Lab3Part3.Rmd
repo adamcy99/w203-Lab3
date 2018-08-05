@@ -79,10 +79,10 @@ library(sandwich)
 library(lmtest)
 
 # Adam's dir
-mydir <- "/Users/adamyang/Desktop/w203/Lab3/w203-Lab3/"
+#mydir <- "/Users/adamyang/Desktop/w203/Lab3/w203-Lab3/"
 
 # Armand's dir
-# mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
+mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
 
 #jim's directory
 #mydir<- "F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
@@ -303,6 +303,8 @@ Based on our review of the six CLM assumptions, this is a valid linear model. We
 ```{R}
 
 # TO DO: Use this at the end (section 4.3)
+# TO DO: add F-statistics and comment on it, code below
+#linearHypothesis(model1, c("prbarr = 0", " density = 0", "polpc = 0", "pctmin80 = 0"), vcov = vcovHC)
 
 # Replace regular Standard Errors with the heteroskedasticity-robust Standard Errors
 #se.model1 <- sqrt(diag(vcovHC(model1)))
@@ -352,7 +354,32 @@ TO DO: Fill in discussion of CLM assumptions
 # 4.2 Regression Third model
 
 TO DO: add a lot of variables.  Consider colinearity that we discovered in correlation matrix in modeling section.
+is the increase signficant from model1 -> model2 -> model3
 
+```{R}
+#TO DO: Joint significance testing
+#joint significance test1
+#rest_model = model1, unrstr_model = model2
+
+#joint significance test2
+#rest_model = model2, unrstr_model = model3
+
+
+#model 3
+model3 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + log(wcon) + log(wtuc) + log(wtrd) + log(wfir) + log(wser) + log(wmfg) + log (wsta) + log(wloc), data = crime_df)
+
+#adjusted r-squared
+summary(model3)$adj.r.squared
+
+plot(model3)
+
+#waldtest since we have heteroskadsticity
+waldtest(model1, model3, vcov = vcovHC)
+
+#test coefficient significance
+coeftest(model3, vcov=vcovHC)
+
+```
 
 
 
