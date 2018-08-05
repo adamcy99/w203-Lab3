@@ -31,7 +31,7 @@ The crime statistics dataset provided for analysis is a subset of the data used 
   * Policy to implement a more stringent arrest protocol
   * Policy to enhance community outreach in high density and minority communities
 
-In addition, we aim to identify other factors that may reduce crime and attempt to fully explore other possible political strategies. Not all correlating variables will have an actionable solution, though their inclusion in the regression model will contribute to its accuracy.
+In addition, we aim to identify other factors that may influence crime and attempt to fully explore other possible political strategies. Not all correlating variables will have an actionable solution, though their inclusion in the regression model will contribute to its accuracy.
 
 
 # 2.0 Data Loading and Cleaning
@@ -61,7 +61,7 @@ The data provided is a sample from 91 counties in North Carolina, containing inf
 |**central**|=1 if in central N.C.   |**mix**|offense mix: face-to-face/other|
 |**pctymle**|percent young male|
 
-**\*** *These are not true probabilities that are limited between 0 and 1, but are rations instead. For example, `probconv` is the ratio of the number of convictions to the number of arrests, which can be larger than 1.*
+**\*** *These are not true probabilities that are limited between 0 and 1, but are ratios instead. For example, `probconv` is the ratio of the number of convictions to the number of arrests, which can be larger than 1.*
 
 
 ## 2.1 Loading the Data
@@ -78,14 +78,22 @@ library(stargazer)
 library(sandwich)
 library(lmtest)
 
+# TO DO: Eliminate these commented lines
 # Adam's dir
 #mydir <- "/Users/adamyang/Desktop/w203/Lab3/w203-Lab3/"
-
 # Armand's dir
-mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
-
+# mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
 #jim's directory
 #mydir<- "F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
+
+# Set directory based on who is running code
+if(file.exists("/Users/adamyang/")){
+    mydir <- "/Users/adamyang/Desktop/w203/Lab3/w203-Lab3/"
+} else if(file.exists("C:/Users/ak021523/")){
+    mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
+} else {
+    mydir<- "F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
+}
 
 # read df
 crime_df = read.csv(paste0(mydir,'crime_v2.csv'))
@@ -96,15 +104,14 @@ crime_df = read.csv(paste0(mydir,'crime_v2.csv'))
 Immediate inspection of the data revealed a few data cleanup steps were required.
 
 - The last 6 rows of the data set were blanks.  These empty records were deleted.
-- One row had values of 1 for both `west` and `central`, placing that county in two regions simultaneously.  It is unknown whether this is possible, but currently there has been no reason to delete this particular row so the data will be kept for now, as evaluation of variable importance is still ongoing.
+- One row had values of 1 for both `west` and `central`, placing that county in two regions simultaneously.  It is unknown whether this is possible, but currently there has been no reason to delete this particular row so the data will be kept for now.
 - The `prbconv` variable, representing the "probability of conviction" was read in as a factor (a cateogorical variable) instead of a numeric variable.  This variable was converted to numeric.
 
 ```{R}
 
-# summarize all vars
-summary(crime_df)
-
-str(crime_df)
+# Summary was performed to understand data.  Will not include in report text, however.
+#summary(crime_df)
+#str(crime_df)
 
 
 # get rid of rows with missing values (this only kills the 6 blank rows)
@@ -118,20 +125,22 @@ crime_df$prbconv <- as.numeric(as.character(crime_df$prbconv))
 ## 2.3 Outlier Identification
 
 TO DO: Write function that computes outliers by column
+TO DO: Do we really want to mention this loose definition of outliers? We likely have dozens of them.
 
-After reviewing the distributions of the different variables, there were 4 variables had outliers, which is defined by anything that is more than Q3 + 1.5 IQR or Q1 - 1.5 IQR: 
+After reviewing the distributions of the different variables, four were found to have outliers (an outlier is defined as a data value that is more than Q3 + 1.5 IQR or Q1 - 1.5 IQR): 
 - polpc - row 51
 - prbarr - row 51
 - wser - row 84
 - taxpc row 25
+
 After reviewing further, there was no reason for the extreme outliers to be removed from the data set. boxplots of the variables above are shown below.
 
 ```{R}
 
-boxplot(crime_df$polpc, main ='polpc')
-boxplot(crime_df$prbarr, main ='prbarr')
-boxplot(crime_df$wser, main = 'wser')
-boxplot(crime_df$taxpc, main = 'taxpc')
+boxplot(crime_df$polpc, main ='Boxplot of polpc')
+boxplot(crime_df$prbarr, main ='Boxplot of prbarr')
+boxplot(crime_df$wser, main = 'Boxplot of wser')
+boxplot(crime_df$taxpc, main = 'Boxplot of taxpc')
 
 # 1.5 IQR from the Q3 = outlier but we can decide which to eliminate
 ```
@@ -149,6 +158,41 @@ TO DO: remove this instruction text
 TO DO: Mention we looked at histograms of each variable
 TO DO: Figure out where we want to mention statistical significance of calculated coefficients.  At end of each model section? after producing all models?
 
+
+It is important to examine our outcome variable, `crmrte` before building any models.
+
+```{R}
+hist(crime_df$crmrte, main="Histogram of crmrte", breaks=30)
+```
+
+The histogram of `crmrte` shows some positive skew, but there are no extreme outliers.
+
+
+Given that our candidate is considering policies involving increasing the size of the police force, instituting stricter arrest protocols, and addressing issues of minorities in the inner cities, the police per capita (`polpc`), probability of arrest, (`prbarr`), population per square mile (`density`), and percent minority (`pctmin80`) variables are also examined.
+
+```{R}
+hist(crime_df$polpc, main="Histogram of polpc", breaks=20)
+```
+
+The histogram of `polpc` shows the outlier point mentioned in the previous section.
+
+```{R}
+hist(crime_df$prbarr, main="Histogram of prbarr", breaks=20)
+```
+The histogram of `prbarr` also shows an outlier point, which is the same outlier record for `polpc`.  
+
+```{R}
+hist(crime_df$density, main="Histogram of density", breaks=20)
+```
+Population density has a positive skew, which is likely due to the few counties with large cities.
+
+```{R}
+hist(crime_df$pctmin80, main="Histogram of pctmin80", breaks=20)
+```
+There are no outliers in the histogram of `pctmin80`.
+
+
+With the exception of the one record that is an outlier for both `polpc` and `prbarr`, the key variables in our dataset that most closely relate to our candidate's policy interests appear to have distributions that can be used for modeling, without the need for any transformations.  As we build models, we will watch for high influence from the outlier record (#51).
 
 
 ## 3.1 Check for multicolinearity
@@ -336,18 +380,54 @@ plot(model1, which=5)
 
 
 
+A second model was created which included the three original explanatory variables (probability of arrest, `prbarr`; population per square mile, `density`; and police per capita, `polpc`) plus two additional variables--the "probability" of conviction, `probconv` and percentage of a county's population comprised of young males `pctymle`.  The probability of conviction was selected based on the thought that if someone believes he is more likely to be convicted if he commits a crime, he may be less inclined to take the risk and commit a crime.  The percent young males variable was included because young males are responsible for a disproportionally large share of total crimes committed.  Including these variables should improve the accuracy of our inferences for crime rate.
+
+
+
+
 ```{R}
 
 # new: prbconv pctymle
 model2 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + prbconv + pctymle, data = crime_df)
-plot(model2)
+#plot(model2)
 
 # Breusch-Pagan
 # 0.0004972
 
 ```
+This second model produced some unexpected results with respect to the linear model assumptions.  First, the residuals show more deviation from the zero conditional mean assumption than our previous model exhibited.  The residuals vs. fitted values plot below shows positive residuals for fitted values less than 0.015.  Perhaps there is an omitted variable responsible for this, or perhaps there is a nonlinear relationship between some of the variables in the model and crime rate.
 
-TO DO: Fill in discussion of CLM assumptions
+```{R}
+plot(model2, which=1, caption="", main="Residuals vs Fitted (Model 2)")
+```
+
+
+Heteroscedasticity of the second model appears to be greater than that of the first.  The Scale-Location plot for the second model is shown below, and it reveals higher standardized residuals for higher fitted values.   Using heteroscedastic-robust standard errors when evaluating the model coefficients should prevent this from being a problem.
+
+
+
+```{R}
+plot(model2, which=3, caption="", main="Scale-Location (Model 2)")
+```
+
+
+The summary of the second model's output is shown below.
+
+
+```{R}
+paste("Model 2 adj.r.square:", summary(model2)$adj.r.squared)
+coeftest(model2, vcovHC)
+```
+The second model has an adjusted r-squared value of 0.80, meaning 80% of the variation in crime rate is explained by the explanatory variables in the model.  The police per capita variable, `polpc`, which was not statistically significance in the first model is now significant in this second model.  As for the two variables added in the second model, the probability of conviction, `prbconv`, is highly statistically significant, while the percent young male, `pctymle`, variable, suprisingly, is not.
+
+In the second model, the slope coefficients can be interpreted as follows:
+
+- For every 1 percentage point increase in the probability of arrest, crime decreases by 0.0006 crimes per person.
+- For every 1 additional person per square mile, crime increases by 0.0056 crimes per person.
+- For every 1 additional police officer per person, crime increases by 7.7 crimes per person.
+- For every 1 percentage point increase in minority population, crime increases by 0.00037 crimes per person
+- For every 1 percentage point increase in probability of conviction, crime decreases by 0.00021 crimes per person.
+
 
 
 
