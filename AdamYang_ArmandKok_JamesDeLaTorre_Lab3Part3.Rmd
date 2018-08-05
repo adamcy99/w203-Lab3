@@ -409,7 +409,13 @@ In the second model, the slope coefficients can be interpreted as follows:
 - For every 1 percentage point increase in probability of conviction, crime decreases by 0.00021 crimes per person.
 
 
+```{R}
+plot(model2, which = 5)
+```
 
+Judging from the Residuals vs. Leverage plot above, point 51 no longer has Cook's distance greater than 1 like it did in model 1. This indicates that point 51 is not influential on the new regression model. This is due to the additional information that the new variables bring to the model.
+
+In addition, the Residual vs. Leverage plot above, we see that there are fewer data points that have standardized residuals over 2. Therefore, model 2 represents our data better than model 1 does. 
 
 # 4.2 Regression Third model
 The following is the model that contains almost all available variables as explanatory variables with the exception of variables we excluded due to high level of multi-collinearity.
@@ -439,12 +445,20 @@ paste("adj.r.square:", summary(model3)$adj.r.squared)
 coeftest(model3, vcov = vcovHC)
 ```
 
-Compared to model 2, the adjusted R-squared is only marginally higher, this suggest that we will need to further evaluate the joint significance of the additional variables that were included as part of model 3. In addition it looks like now `pctymle`'s slope coefficient is considered signficant compared to model 2, which may be due to the nuances that the wage variables bring for the `pctymle` variable; the slope coefficient can be interpreted that a percentage point increase in `pctymle` corresponds to .00095 increase in `crmrte`.
+Compared to model 2, the adjusted R-squared is only marginally higher, this suggest that we will need to further evaluate the joint significance of the additional variables that were included as part of model 3. The following are the interpretation of the signifcant coefficients:
+
+- For every percentage point increase in increase in probability arrest, crime rate decreases by 0.0005.
+- For every 1 addtional person per square mile, crime increases by 7.7 crimes per person.
+- For every percentage point increase in minority populatoin, crime increases by .0004 crimes per person.
+- For every percentage point increase in probability of conviction, crime decreases by 0.00019 crimes per person
+- For every percentage point increase in young male population, crime increases by 0.00095 crimes per person.
+
+What is interesting here is that `pctymle` variable is now considered significant, unlike what is in model 2. This may be due to the nuances that the additional variables bring for the `pctymle` variable. 
 
 **Other Analysis**
-The residuals vs. leverage plot shows that there are two data points (25 and 84), that have Cook's distance greater or equal to 1, indicating that they highly influence the regression. In looking at data point 84 further, there are several things that stand out: it has the highest `wser`, `prbconv`, and `pctmin80`. On the other hand point 25, highest `taxpc`. However, we investigated the other values of this county and could not justify removing this data point without further information. 
+The residuals vs. leverage plot shows that there are two data points (25 and 84), that have Cook's distance greater than 1, indicating that they highly influence the regression model. In looking at data point 84 further, there are several things that stand out: it has the highest `wser`, `prbconv`, and `pctmin80`. On the other hand point 25, highest `taxpc`. However, we investigated the other values of this county and could not justify removing this data point without further information. 
 
-Furthermore, in the residual vs. leverage plot below, we see that 7.7% of our data points have standardized residuals over 2. Therefore, our model has too much error and may represent our data poorly.
+Furthermore, in the residual vs. leverage plot below, we see that compared to model 2, we now have more data points have standardized residuals over 2. Therefore, compared to model 2, model 3 does not provide a better representation of the data.
 
 ```{R}
 plot(model3, which = 5)
@@ -453,43 +467,31 @@ plot(model3, which = 5)
 
 # 4.3 Regression Table
 
-TO DO: Be sure to convert SE's to robust before displaying.
+The regression table below shows the summary of the three models that were created.
+
+
+- `polpc` as it can be seen in the table, this variable only became significant after more variables were introduced in model 2 and 3, and it has a positive slope coefficient, which indicates that crime rate per person increases with more police. Campaigning for the increase of police force may not be a good idea.
+
+- `prbarr` became more significant, and the slope coefficient became more negative in model 2 and model 3. So the campaign might be better served on having tougher police than simply having more police 
+
+- `prbconv` when introduced to the model, this variable was significant, and it has a negative slope, indicating the higher probability of conviction is, the lower the crime rate becomes. So we can say that higher likelihood of conviction may be a deters people from comitting crime. 
+This is consistent with the campaign stance of being "tough on crime." The campaign may want to pursue a policy to better improve the district attorney's office, so that we can increase the probability of conviction.
 
 ```{R}
-
-# TO DO: Use this at the end (section 4.3)
-
 # Replace regular Standard Errors with the heteroskedasticity-robust Standard Errors
-#se.model1 <- sqrt(diag(vcovHC(model1)))
+se.model1 <- sqrt(diag(vcovHC(model1)))
+se.model2 <- sqrt(diag(vcovHC(model2)))
+se.model3 <- sqrt(diag(vcovHC(model3)))
 
-#stargazer(model1, title = "Base Model",type = "text", report = "vcstp", omit.stat = "f", se = list(se.model1, NULL), star.cutoffs = c(0.05,0.01,0.001)
+#stargazer with all 3 models
+stargazer(model1, model2, model3, title = "Regression Models", type = "text", report = "vcsp", omit.stat = "f", se = list(se.model1, se.model2, se.model3), star.cutoffs = c(0.05,0.01,0.001))
+
 ```
 
+discuss how the significant coefficients are change
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# 4.4 Model Selection
 **Joint Signficance**
 
 In addition to the table above, we also tested the joint signficance of the model, to see if the variables that were added for model 2 and model 3 improved the fit in a statistically significant way.
@@ -504,10 +506,12 @@ As we can see above, the addition of 'probconv' and 'pctymle' in model 2 is join
 #joint significance between model1 and model2
 waldtest(model2, model3, vcov = vcovHC)
 
-summary(model2)$adj.r.squared
 summary(model3)$adj.r.squared
 ```
 The addition of variables in model 3 are not jointly significant when compared against model 2, meaning did not improve the fit of the model in a statistically significant way.
+
+
+
 
 
 ```{R}
