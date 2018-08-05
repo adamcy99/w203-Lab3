@@ -283,11 +283,11 @@ plot(crime_df$wfir, crime_df$density, main = "density vs. wfir")
 
 # 4.0 Regression Models: Base Model
 
+TO DO: create a new section with 6 CLM assumptions for the best model, and trim down this section.
+
 The initial model created contains only those variables directly related to the candidate's positions on being pro-police, for strict enforcement, and concern with inner city and minority communities. Therefore, the variables we have chosen to represent these positions are: probability of arrest (prbarr), density, police per capita (polpc), and the percentage of minorities (pctmin80). 
 
 ```{R}
-#TO DO: create a new section with 6 CLM assumptions for the best model, and trim down this section.
-
 # Creating initial model
 model1 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 , data = crime_df)
 ```
@@ -332,7 +332,9 @@ To further verify this observation, a histogram of this model's residuals is sho
 hist(model1$residuals, breaks=20)
 ```
 
+
 Based on our review of the six CLM assumptions, this is a valid linear model. We replaced the regular standard errors with the heteroskedasticity-robust standard errors. The resulting coefficients and parameters of the model are shown below:
+
 ```{R}
 linearHypothesis(model1, c("prbarr = 0", " density = 0", "polpc = 0", "pctmin80 = 0"), vcov = vcovHC)
 
@@ -427,6 +429,7 @@ model3 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + prbconv + pctymle + 
 Model 3 for most part follows meets most of the CLM assumptions, however there are exceptions, and some other interesting points  discussed below.
 
 **CLM 5. Homoscedasticity:** 
+
 The Scale-Location plot below reveals that there seems to be heteroscedacity given that the spline is not horizontal. Howver, the Breusch-Pagan test has a p-value greater than 0.05, meaning we cannot reject the null hypothesis of homoscedasticity. Based on the conflicting findings, to be conservative, heteroscedastic-robust standard errors will be used to perform any sort of statistical test for the model.
 
 ```{R}
@@ -488,88 +491,90 @@ stargazer(model1, model2, model3, title = "Regression Models", type = "text", re
 
 `pctymle` this variable did not become significant until model 3, when additional variables were introduced. This may be due to the nuance that the wage variables have, and how they might impact the young men population. Practically, this can be interpreted as: when wages are low and there is a high percentage of young men in a county, then the young men may have more incentive to commit crimes. There may be an omitted variable effect on the `pctymle` by the wages variables. Upon closer inspection of the various wage variables, `wsta`, `wser` and `wmfg` while not significant, do have negative slopes. From a practical stand point,perhaps young men tend to have state, service and/or manufacturing jobs, and the higher the wages for those three industries, the less incentive there is for the young men to commit crime.
 
-# 4.4 Model Selection
-**Joint Signficance**
+# 4.4 Model Selection and Assessment
 
-In addition to the table above, we also tested the joint signficance of the model, to see if the variables that were added for model 2 and model 3 improved the fit in a statistically significant way.
+To DO: We need justification of why model 2 was chosen
+TO DO: detailed assessment of the 6 CLM
+TO DO: other diagnostic tools to assess whether the assumptions appear to be violated.
+TO DO: create model 4, and discuss why it is not worth it to add additional variables to the model (i.e. because the model do not improve in a statistically significant way), this may be due to omitted variable bias from a variable that is not included in the data set, and then segway from here to the omitted variable discussion.
+
+**Justification**
+To help select the best model, we ran a joint significance test to to see if the variables that were added for model 2 and model 3 improved the regression in a statistically significant way.
 
 ```{R}
 #joint significance between model1 and model2
 waldtest(model1, model2, vcov = vcovHC)
-```
-As we can see above, the addition of 'probconv' and 'pctymle' in model 2 is jointly significant, thus improving the fit of the model. Next we will further test to see if the remainder of the variables that were not included as part of model 2 can further improve the fit of the model.
 
-```{R}
-#joint significance between model1 and model2
+#joint significance between model2 and model3
 waldtest(model2, model3, vcov = vcovHC)
-
-summary(model3)$adj.r.squared
 ```
-The addition of variables in model 3 are not jointly significant when compared against model 2, meaning did not improve the fit of the model in a statistically significant way.
 
+The addition of the `pctymle` and `prbconv` in model 2 improved the model in a statistically significant way. However the addition of variables in model 3 are not jointly significant when compared against model 2.
 
-
-
+Based on the Shapiro-Wilkes test, we can reject the null hypothesis of normal distribution for model 1, but not for model 2. While model 1 fails 
+the normality assumption, model 2 does not.
 
 ```{R}
-#TO DO: do we still need the code below or delete it?
-crime_df2 <- crime_df[-c(84,25),]
-
-model1 <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data = crime_df2)
-
-summary(model1)$r.squared
-summary(model1)$coefficients
-
+shapiro.test(model1$residuals)
+shapiro.test(model2$residuals)
 ```
 
-The following is the model that contains a transformed explanatory variable.
+Model 2 also has the best standardized residual vs. leverage plot, where it has the least amount of data points that have standardized residuals greater than 2. In addition, unlike model 1 and 3, model 2 do not have any data points that has Cook's distance greater than 1 as it can be seen in the Residuals vs. Leverage plots above. This indicates that model 2 is not strongly influenced by any particular data point.
+
+**CLM Assumption Diagnostics**
+
+Here we are doing a detailed evaluation of our chosen model (model 2) against the 6 CLM Assumptions.
+
+**CLM 1. Linear population model:** We do not have to worry about this assumption at the moment because we haven’t constrained the error term. 
+
+**CLM 2. Random Sampling:** To check random sampling, we need domain knowledge and an understanding of how the data were collected.  There are 100 counties in North Carolina, and there are data for 91 of them.  Without knowledge of the 9 excluded counties, no statement regarding the validity of random sampling can be made.
+
+**CLM 3. No perfect multicollinearity:** There is no need to explicitly check for perfect collinearity, because R would've reported a warning if this occurred.  Furthermore, the correlation matrix shown in section 3.2 also shows that there is no perfect collinearity.
+
+**CLM 4. Zero Conditional Mean:**  $E(u|x)=0$. For this model, the residuals vs. fitted values plot shown below reveals a relatively flat spline centered around zero for most of the fitted values. However, the zero conditional mean may not hold for low fitted values. This may be caused by biases introduced by the additional variables. We may need to consider investigating and removing the source of the bias.
 
 ```{R}
-#TO DO: do we still need the code below or delete it?
-model_transform <- lm(crmrte ~ prbarr + log(prbconv) + density, data = crime_df2)
-
-summary(model_transform)$r.squared
-summary(model_transform)$coefficients
+# Residuals vs. Fitted Plot
+plot(model2, which=1)
 ```
 
-The following is the model that contains only variables that were identified to be most relevant to crmrte based on their marginal R-squared and standardized slope coefficient values.
+**CLM 5. Homoscedasticity:** In the residuals vs. fitted values plot shown in **CLM 4**, the data points seem to form a cone shape which suggests some heteroscedasticity. In the scale-location plot below, there seems to be a slight positive slope across the range of fitted values. Furthermore, the Breusch-Pagan test shown below has a p-value of 0.0004972 which indicates that the null hypothesis of homoscedasticity can be rejected. However, heteroscedastic-robust standard errors were used When evaluating the statistical significance with this model, so the heteroscedacity may not be an issue.
 
 ```{R}
-#TO DO: do we still need the code below or delete it?
-model_key <- lm(crmrte ~ prbarr + prbconv + polpc + density + pctmin80, data = crime_df2)
+# Scale-Location Plot
+plot(model2, which=3)
 
-summary(model_key)$r.squared
-summary(model_key)$coefficients
+# Breusch-Pagan
+bptest(model2)
 ```
 
-### Stargazer Regression Table for Model Specifications
+**CLM 6. Normality of errors:** In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. The standardized residuals show some deviation from the straight line at the high end of the distribution. This suggests some skew at the high end of our residuals. However, the Shapiro test shown below has a p value of 0.05755 which means we cannot reject the null hypothesis of the residuals having a normal distribution.
 
-```{R, results='asis'}
-library(stargazer)
-stargazer(model_transform, model_key, model1,
-          title = "Linear Models Parameters Predicting Crime Rate",
-          type = 'text', report = 'vc',
-          keep.stat = c('rsq', 'n'),
-          omit.table.layout = 'n')
+```{R}
+# Q-Q plot of Standardized Residuals
+plot(model2, which=2)
+
+shapiro.test(model2$residuals)
 ```
 
+To further verify this observation, a histogram of this model's residuals is shown below. The histogram shows approximate normality near the center of the distribution, but also some evidence of skewness on the positive end. However, the Central Limit Theorem (CLT) claims that if the sample size is large enough we can assume that the residuals have a normal sampling distribution. For distributions with a very strong skew, a much larger sample size may be required, but for minor skews as in this case, the rule of thumb is that the CLT can be applied when the sample size is greater than 30. The sample size used for this model is 91 which should be enough for the CLT to hold.
 
-### Recommendation
+```{R}
+hist(model2$residuals, breaks=20)
+```
 
-For interpretability purposes, the model was re-done using non-standardized variables:
--prbarr
--prbconv
--polpc
--density
--pctmin80
+Based on our review of the six CLM assumptions, this is a valid linear model. We replaced the regular standard errors with the heteroskedasticity-robust standard errors. 
 
-Recommendation for political campaign:
-- police per capita has a positive slope coefficient with crmrte, and this may be due to more police are present in areas with high crmrte. This suggests that purely hiring more police officers may not be an impactful solution.
-- However probability of arrest and conviction both have a negative slope coefficients. The model suggests that perhaps a zero tolerance policy towards crime is needed to increase arrests and convictions and thus deter crimes from happening.
-- In terms areas with large minority population and high density, since these variable cannot be changed that much, perhaps a community outreach (e.g. job training program, afterschool programs, tutor/mentor program) to educate areas with a lot of minority can be done, so that crimes can be reduced in those areas.
+**Adjusting Model Specifications**
+TO DO: fix the bias.
 
+```{R}
+model4 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + prbconv , data = crime_df)
+plot(model4)
+coeftest(model4, vcov = vcovHC)
+```
 
-### Omitted Variables Discussion
+# 5.0 Omitted Variables Discussion
 
 Even by including all of the relevant variables provided in the data set to the linear regression, the resulting model may still be biased. This is because of potentially influential omitted variables that is either not provided, or is difficult to obtain. Below are some of the omitted variables that might be important along with how their absense may affect our results.
 
@@ -630,6 +635,21 @@ TO DO: In Cities, larger percentage of minorities in cities abuse drugs, larger 
 Something that strongly stands out in all of these omitted variables is that the OLS coefficient on `pctmin80` is strongly impacted by omitted variable bias. It is possible that the marginal effect of the percentage of minorities on crime rate is entirely an artifact of omitted variable bias. 
 
 # 6.0 Conclusion
+
+### Recommendation
+
+For interpretability purposes, the model was re-done using non-standardized variables:
+-prbarr
+-prbconv
+-polpc
+-density
+-pctmin80
+
+Recommendation for political campaign:
+- police per capita has a positive slope coefficient with crmrte, and this may be due to more police are present in areas with high crmrte. This suggests that purely hiring more police officers may not be an impactful solution.
+- However probability of arrest and conviction both have a negative slope coefficients. The model suggests that perhaps a zero tolerance policy towards crime is needed to increase arrests and convictions and thus deter crimes from happening.
+- In terms areas with large minority population and high density, since these variable cannot be changed that much, perhaps a community outreach (e.g. job training program, afterschool programs, tutor/mentor program) to educate areas with a lot of minority can be done, so that crimes can be reduced in those areas.
+
 This is consistent with the campaign stance of being "tough on crime." The campaign may want to pursue a policy to better improve the district attorney's office, so that we can increase the probability of conviction.
 
 # TO BE SORTED LATER
