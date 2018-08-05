@@ -605,7 +605,6 @@ We do not have a concrete understanding of whether children from two parent hous
 Potential Omitted Variable #4: Percentage of Highschool Graduates
 
 $$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*pct\_hs\_graduates $$
-
 $$ pct\_hs\_graduates = \alpha_0 + \alpha_1*pctmin80 $$
 
 The average years of education in a county may also be an important factor that influences crime rate. We assume that more graduation from highschool would result in a higher chance of employment at a higher paying job. Furthermore, time spent in school at a young age is believed to keep children out of trouble and away from bad influences. Therefore, a county with a higher percentage of highschool graduates may possibly have a lower crime rate ($\beta_2<0$). According to governing.com, the North Carolina highschool graduation rate of African Americans is 10% lower than the highschool graduation rate of Caucasians in 2011. By extrapolating this information, we assume that counties with higher percentage of minorities will have a lower percentage of highschool graduates ($\alpha_1<0$). This means that the omitted variable bias is positive, which would scale the slope coefficient on `pctmin80` away from zero (more positive). Thus, the marginal effect and statistical significance of `prbarr` on crime rate may also be overestimated by omitting the effect of education in the model.
