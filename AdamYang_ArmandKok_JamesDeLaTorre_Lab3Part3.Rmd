@@ -274,7 +274,6 @@ The adjusted r-squared of the model is relatively high at 0.65. This means that 
 
 ```{R}
 coeftest(model1, vcovHC)
-coeftest(model2, vcovHC)
 ```
 
 Furthermore, the results of our initial model shows that the probability of arrest is statistically significant as a modulator of crime, while the density and minority percentage of each county are strongly statistically significant. The police per capita, on the other hand, is not. The slope coefficients tell us that for every 0.01 point increase in `prbarr`, there is a corresponding 0.00046 decrease in crimes per person. The model also suggests that by increasing the density of a county by 1 person per square mile, crime commited per person may rise by 0.0074. Finally, for every percentage point increase of minorities in a county, crime commited per person may rise by 0.0003. The model also suggests that by increasing the police per capita by 1 will result in 5 additional crimes commited per person. However, this slope coefficient is shown to be statistically insignificant.
@@ -321,11 +320,11 @@ The second model has an adjusted r-squared value of 0.80, meaning 80% of the var
 
 In the second model, the significant slope coefficients can be interpreted as follows:
 
-- For every 0.01 increase in the probability of arrest, crime decreases by 0.062 crimes per person.
+- For every 0.01 increase in the probability of arrest, crime decreases by 0.00062 crimes per person.
 - For every 1 additional person per square mile, crime increases by 0.0055 crimes per person.
 - For every 1 additional police officer per person, crime increases by 8.00 crimes per person.
 - For every 1 percentage point increase in minority population, crime increases by 0.00037 crimes per person
-- For every 0.01 increase in probability of conviction, crime decreases by 0.021 crimes per person.
+- For every 0.01 increase in probability of conviction, crime decreases by 0.00021 crimes per person.
 
 
 ```{R}
@@ -374,12 +373,12 @@ coeftest(model3, vcov = vcovHC)
 
 Compared to model 2, the adjusted R-squared is only marginally higher, which suggest that we will need to further evaluate the joint significance of the additional variables that were included as part of model 3. The following are the interpretation of the signifcant coefficients:
 
-- For every 0.01 increase in probability arrest, crime rate decreases by 0.053.
+- For every 0.01 increase in probability arrest, crime rate decreases by 0.00053.
 - For every 1 additional person per square mile, crime increases by 0.0055 crimes per person.
 - For every 1 addtional police officer per person, crime increases by 7.2 crimes per person.
 - For every percentage point increase in minority populatoin, crime increases by .0004 crimes per person.
-- For every 0.01 increase in probability of conviction, crime decreases by 0.019 crimes per person
-- For every 0.01 increase in young male population, crime increases by 0.092 crimes per person.
+- For every 0.01 increase in probability of conviction, crime decreases by 0.00019 crimes per person
+- For every 0.01 increase in young male population, crime increases by 0.00092 crimes per person.
 
 What is interesting here is that `pctymle` variable is now considered significant, unlike in model 2. This may be due to the nuances that the additional variables bring for the `pctymle` variable. 
 
