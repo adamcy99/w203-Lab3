@@ -56,7 +56,7 @@ The dataset provided is a sample from 91 counties in North Carolina, containing 
 
 The data file, `crime_v2.csv` was opened and found to contain 97 rows.
 
-```{R}
+```{R, include = FALSE}
 # Import all libraries that will be used in the lab
 library(car)
 library(reshape2)
@@ -64,7 +64,9 @@ library(ggplot2)
 library(sandwich)
 library(stargazer)
 library(lmtest)
+```
 
+```{R}
 # Set directory based on who is running code
 if(file.exists("/Users/adamyang/")){
     mydir <- "/Users/adamyang/Desktop/w203/Lab3/w203-Lab3/"
