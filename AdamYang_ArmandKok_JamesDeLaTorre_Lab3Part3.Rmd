@@ -597,12 +597,9 @@ Something that strongly stands out in all of these omitted variables is that the
 
 # 6.0 Conclusion
 
-The best model for crime rate, have the following coefficients:
-* prbarr
-* density
-* polpc
-* pctmin80
-* pctymle
-Out of these coefficients, `polpc` was not significant, while the others were. As discussed in section **TO DO** police per capita has a positive slope coefficient with crmrte which is counterintuitive. We believe this is an artifact of counties of higher crime rate are hiring more police officers to combat crime. Therefore a policy of "more cops on the street" may not be very effective. However, higher "probability" of arrest may lead to lower crime rate. Therefore the campaign may want to pursue a policy of strict enforcement of the law by police officers to increase "probability" of arrest to help drive down crime rate.
+The best model for crime rate included the probability of arrest, population density, police per capita, percent minority population, and percent young males.  All of these variables, except for police per capita, had statistically significant influence on the crime rate.
 
-The other variables (density, pctymle, pctmin) however cannot be directly affected by a policy, but these variables are affected by the ommited variables that were discussed above, which gives us an idea where to focus our efforts. For example, we may want to create a job placement program in dense areas with high percentage of minority population, so that we can decrease unemployment rate and poverty rate and therefore reduce crime rate. Additionally, we may want to do mentorship programs in areas with high percentage of minority that have young males who lack positive role models and have a low high school graduation rate in hopes of reducing crime rate. Lastly, we may want to pursue an anti drug campaign to reduce crime.
+Police per capita showed a positive correlation with crime rate, which seems counterintuitive.  We believe this is an artifact of counties with higher crime rates hiring more police officers to combat crime.  Therefore, a policy of "more cops on the street" may not be very effective.  Higher probability of arrest, however, correlates to a lower crime rate.  If would-be criminals feel they are more likely to be arrested, they are less likely to commit crimes.  Therefore, the campaign may want to pursue a policy of strict enforcement of the law by police officers.
+
+The other variables (density, percent young male, and percent minority population), however, cannot be directly affected by a policy, but these variables are affected by the ommited variables discussed earlier, which gives us ideas as to where to focus our efforts. For example, we may want to create a job training and placement program in dense areas with high percentage of minority population, in an efforet to decrease unemployment and poverty, which should in turn lead to a reduction in the crime rate. Additionally, we may want to implement mentorship programs in areas with high percentage of minorities where young males may lack positive role models or have low high school graduation rate. Lastly, we may want to pursue an anti-drug campaign to reduce crime.
+
