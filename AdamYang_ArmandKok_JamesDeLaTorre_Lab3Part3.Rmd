@@ -344,8 +344,6 @@ paste("adj.r.square:", summary(model1)$adj.r.squared)
 The adjusted r-squared of the model is relatively high at 0.66. This means that 66% of the variation in crime rate is explained by our input variables. In addition, the omnibus test reveals that the model is statistically significant, indicating that the model has some predictive power.
 
 ```{R}
-
-
 coeftest(model1, vcovHC)
 
 ```
@@ -701,4 +699,3 @@ The best model for crime rate, have the following coefficients:
 Out of these coefficients, `polpc` was not significant, while the others were. As discussed in section **TO DO** police per capita has a positive slope coefficient with crmrte which is counterintuitive. We believe this is an artifact of counties of higher crime rate are hiring more police officers to combat crime. Therefore a policy of "more cops on the street" may not be very effective. However, higher "probability" of arrest may lead to lower crime rate. Therefore the campaign may want to pursue a policy of strict enforcement of the law by police officers to increase "probability" of arrest to help drive down crime rate.
 
 The other variables (density, pctymle, pctmin) however cannot be directly affected by a policy, but these variables are affected by the ommited variables that were discussed above, which gives us an idea where to focus our efforts. For example, we may want to create a job placement program in dense areas with high percentage of minority population, so that we can decrease unemployment rate and poverty rate and therefore reduce crime rate. Additionally, we may want to do mentorship programs in areas with high percentage of minority that have young males who lack positive role models and have a low high school graduation rate in hopes of reducing crime rate. Lastly, we may want to pursue an anti drug campaign to reduce crime.
-
