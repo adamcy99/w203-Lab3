@@ -451,7 +451,8 @@ coeftest(model3, vcov = vcovHC)
 Compared to model 2, the adjusted R-squared is only marginally higher, this suggest that we will need to further evaluate the joint significance of the additional variables that were included as part of model 3. The following are the interpretation of the signifcant coefficients:
 
 - For every percentage point increase in increase in probability arrest, crime rate decreases by 0.0005.
-- For every 1 addtional person per square mile, crime increases by 7.7 crimes per person.
+- For every 1 additional person per square mile, crime increases by 0.0056 crimes per person.
+- For every 1 addtional police officer per person, crime increases by 7.7 crimes per person.
 - For every percentage point increase in minority populatoin, crime increases by .0004 crimes per person.
 - For every percentage point increase in probability of conviction, crime decreases by 0.00019 crimes per person
 - For every percentage point increase in young male population, crime increases by 0.00095 crimes per person.
@@ -483,6 +484,7 @@ stargazer(model1, model2, model3, title = "Regression Models", type = "text", re
 
 ```
 
+
 `polpc` as it can be seen in the table, this variable only became significant after more variables were introduced in model 2 and 3. This may be due to the omitted variable effect that `prbconv` had on `polpc`. We believe that higher `prbconv` would result in lower `crmrte` while higher `polpc` would result in higher `prbconv`. Therefore, the omitted variable bias would be negative and scale the OLS coefficient on `polpc` towards 0. This would cause the marginal effect of `polpc` to be underestimated. By introducing `prbconv` in model 2, we are negating this omitted variable bias which is why `polpc` became statistically significant. The slope coefficient of `polpc` has a positive slope which suggests that counties with higher police per capita would have a higher crime rate, which seems to be counter intuitive. It is possible that counties with higher crime rates are hiring more policemen in hopes of decreasing crime, but the presence of these extra policemen does not have the impact on crime rate that they hoped. Therefore increasing the police force may not be the most effective policy to decrease the crime rate
 
 `prbarr` became more significant, and the slope coefficient became more negative in model 2 and model 3. This may be due to the omitted variable effect that `prbconv` had on `prbarr`. We believe that higher `prbconv` would lead to lower `crmrte`, while higher `prbarr` would result in lower `prbconv`. This can be interpreted that being overzealous in arrest may lead to a lower conviction rate. Therefore, the omitted variable bias would be positive and scale the OLS coefficient on `prbarr` towards 0. This would cause the marginal effect of `prbarr` to be underestimated. By introducing `prbconv` in model 2, we are negating this omitted variable bias which is why `prbarr` became more statistically significant. So practically, the model suggests that we need to reach a level of balance between arrests and conviction.
@@ -511,6 +513,8 @@ waldtest(model2, model3, vcov = vcovHC)
 
 The addition of the `pctymle` and `prbconv` in model 2 improved the model in a statistically significant way. However the addition of variables in model 3 are not jointly significant when compared against model 2.
 
+the AIC test, reveals that model 2 has the lowest AIC values, indicating that it is the best fitting model for the data set among the three models that were created.
+
 Based on the Shapiro-Wilkes test, we can reject the null hypothesis of normal distribution for model 1, but not for model 2. While model 1 fails 
 the normality assumption, model 2 does not.
 
@@ -531,7 +535,7 @@ Here we are doing a detailed evaluation of our chosen model (model 2) against th
 
 **CLM 3. No perfect multicollinearity:** There is no need to explicitly check for perfect collinearity, because R would've reported a warning if this occurred.  Furthermore, the correlation matrix shown in section 3.2 also shows that there is no perfect collinearity.
 
-**CLM 4. Zero Conditional Mean:**  $E(u|x)=0$. For this model, the residuals vs. fitted values plot shown below reveals a relatively flat spline centered around zero for most of the fitted values. However, the zero conditional mean may not hold for low fitted values. This may be caused by biases introduced by the additional variables. We may need to consider investigating and removing the source of the bias.
+**CLM 4. Zero Conditional Mean:**  $E(u|x)=0$. For this model, the residuals vs. fitted values plot shown below reveals a relatively flat spline centered around zero for most of the fitted values. However, looking at the plot closely the zero conditional mean does not hold for the majority of the fitted values. This may be caused by biases introduced by the additional variables or non-linear relationship between the new variables and the output variable. We may need to consider investigating and removing the source of the bias.
 
 ```{R}
 # Residuals vs. Fitted Plot
@@ -548,7 +552,7 @@ plot(model2, which=3)
 bptest(model2)
 ```
 
-**CLM 6. Normality of errors:** In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. The standardized residuals show some deviation from the straight line at the high end of the distribution. This suggests some skew at the high end of our residuals. However, the Shapiro test shown below has a p value of 0.05755 which means we cannot reject the null hypothesis of the residuals having a normal distribution.
+**CLM 6. Normality of errors:** In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. The standardized residuals show some deviation from the straight line at the high end of the distribution. This suggests some skew at the high end of our residuals. However, the Shapiro-Wilk test shown below has a p value of 0.05755 which means we cannot reject the null hypothesis of the residuals having a normal distribution.
 
 ```{R}
 # Q-Q plot of Standardized Residuals
@@ -563,22 +567,81 @@ To further verify this observation, a histogram of this model's residuals is sho
 hist(model2$residuals, breaks=20)
 ```
 
-Based on our review of the six CLM assumptions, this is a valid linear model. We replaced the regular standard errors with the heteroskedasticity-robust standard errors. 
+Based on our review of the six CLM assumptions, model 2 may not be considered an unbiased estimator, especially since it violates the zero conditional mean. To draw inferences on the coefficients, we replaced the regular standard errors with the heteroskedasticity-robust standard errors. 
 
 **Adjusting Model Specifications**
-TO DO: fix the bias.
+After reviewing the 6 CLM assumptions, the zero-conditional mean assumption was violated, upon investigation, we found that the addition of `prbconv` introduced some bias when `prbarr` is also included in the regression model. So to improve the model and meet the zero-conditional mean assumption, we decided to remove `prbconv` from the regression model, and created model 4 below
 
 ```{R}
-model4 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + prbconv , data = crime_df)
+model4 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + pctymle, data = crime_df)
+
+waldtest(model1, model4, vcov = vcovHC)
+
 plot(model4)
-coeftest(model4, vcov = vcovHC)
+
+crime_df[crime_df$prb_conv > 0.65,]
+
+crime_df$prb_conv>0.65
+
+boxplot(crime_df$prbconv)
+
+
+
+
+plot(crime_df$prbconv, crime_df$crmrte)
+plot(crime_df$prbarr, crime_df$crmrte)
+
+
+
+crime_df[51,]
+
+summary(crime_df$prbconv)
+
+```
+
+Upon inspection of the residual vs fitted plot below , it appears that model 4 does not violate the zero conditional mean assumption. 
+
+```{r}
+plot(model4, which = 1)
+```
+
+However, as a tradeoff, model 4's Normal Q-Q plot shows that our residuals have lost normality. We confirmed this by comparing the shapiro test of our two models. As shown below, the p-value of model 4 is 4.755e-05, which means we can reject the null hypothesis of normal error distribution, while the p-value for model 2 is 0.05755, which means we cannot reject the null hypothesis. However, since we have a sample size of 91 we can invoke the CLT to rely on the asymptotic properties of OLS.
+
+```{R}
+plot(model4, which = 2)
+shapiro.test(model4$residuals)
+shapiro.test(model2$residuals)
+```
+
+Also, another trade off is that we now have a highly influential data point (point #51), as we can see below in the Residuals vs. Leverage plot. Lastly, we also increased the number of standardized residuals that are greater than 2, indicating that model 4 is not as good of a represantation of the data set compared to model 2.
+
+```{R}
+plot(model4, which = 5)
+```
+
+Despite the tradeoffs mentioned above, we think it is more important to meet the zero-conditional mean assumption, since that is the strictest assumption among the 6 in CLM that we need to meet in order to get a unbiased estimator.
+
+Below is the final heteroscedastic robust coefficient test, and the significant coefficients can be interpreted as follows:
+- For every percentage point increase in increase in probability arrest, crime rate decreases by 0.0004.
+- For every 1 additional person per square mile, crime increases by .007 crimes per person.
+- For every percentage point increase in minority population, crime increases by .0003 crimes per person.
+- For every percentage point increase in young male population, crime increases by 0.00129 crimes per person.
+
+```{R}
+# Replace regular Standard Errors with the heteroskedasticity-robust Standard Errors
+se.model2 <- sqrt(diag(vcovHC(model2)))
+se.model4 <- sqrt(diag(vcovHC(model4)))
+
+#stargazer with all 3 models
+stargazer(model2, model4, title = "Regression Models", type = "text", report = "vcsp", omit.stat = "f", se = list(se.model2, se.model4), star.cutoffs = c(0.05,0.01,0.001))
+
 ```
 
 # 5.0 Omitted Variables Discussion
 
 Even by including all of the relevant variables provided in the data set to the linear regression, the resulting model may still be biased. This is because of potentially influential omitted variables that is either not provided, or is difficult to obtain. Below are some of the omitted variables that might be important along with how their absense may affect our results.
 
-Potential Omitted Variable #1: Financial Wellfare (Poverty Rate and Unemployment)
+**Potential Omitted Variable #1**: Financial Wellfare (Poverty Rate and Unemployment)
 
 We believe that an important driver of crime rate is the financial wellfare of the people. The following equations can help us determine how the omitted variable bias would impact our density coefficient:
 
@@ -591,7 +654,7 @@ Using the same analysis method on `pctmin80`, we theorize that in 1987, minoriti
 
 The tax revenue and various wage variables may help proxy these two omitted variables. However, we believe they are not very accurate proxies, especially for unemployment rate, because the unemployed are not paying income tax and do not have any wages at all.
 
-Potential Omitted Variable #2: Percent of Arrests Driven by Discrimination
+**Potential Omitted Variable #2**: Percent of Arrests Driven by Discrimination
 
 In 1987, and arguably even today, discrimination has unfortunately played a big role in the incarceration of certain minority groups. This can come in the form of false arrests, or disproportionate arrests for petty crimes and misdemeanors in minority communities. The higher the number of arrests driven by discrimination, the higher the reported crime rate would be ($\beta_2>0$). Furthermore, the higher the percentage of minorities in a county, the higher the number of arrests driven by discrimination would be ($\alpha_1 > 0$). Therefore, the omitted variable bias ($\beta_2\alpha_1$) of discrimination is positive, which would scale the OLS coefficient on `pctmin80` away from zero (more positive). This means that the marginal effect and statistical significance of `pctmin80` on crime rate may be overestimated.
 
@@ -602,149 +665,40 @@ In addition, we believe that counties with a higher "probability" of arrest woul
 
 The number of arrests driven by discrimination is very difficult to measure because very few policemen would admit to doing such a thing. Therefore, we unfortunately do not have any proxy variables to represent this omitted variable, except maybe `pctmin80`. However, using `pctmin80` as a representation of discrimination would be imperfect and making a lot of broad assumptions.
 
-Potential Omitted Variable #3: Family Heath (Number of Parents, Amount of Abuse/Neglect, Availability of Positive Role Models)
+**Potential Omitted Variable #3**: Family Heath (Number of Parents, Amount of Abuse/Neglect, Availability of Positive Role Models)
 
-Another potentially strong influence on crime is family health. This can be possibly represented by the number of parents an individual has, the level of abuse and neglect that the individual suffers, and the availability of positive role models in the individual's life, among other things. There are so many complicated aspects to family health that it would be hard to accurately predict the effects of this omitted variable on the OLS coefficients. For the sake of simplicity, we will only explore the effects of having a two parent household as our omitted variable.
+Another potentially strong influence on crime is family health. This can be possibly represented by the number of parents an individual while growing up in a household, the level of abuse and neglect that the individual suffers, and the availability of positive role models in the individual's life, among other things. There are so many complicated aspects to family health that it would be hard to accurately predict the effects of this omitted variable on the OLS coefficients. For the sake of simplicity, we will only explore the effects of having a two parent household as our omitted variable.
 
 $$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*pct\_of\_2parents\_hh $$
 $$ pct\_of\_2parents\_hh = \alpha_0 + \alpha_1*pctmin80 $$
 
 We do not have a concrete understanding of whether children from two parent households are less likely to commit crime than children in single-parent households and orphans. Our subjective assumption is that it might be easier for two parents to provide good care for a child. For example, with two providers, the child would be less likely to live in poverty as well as possibly have more quality time with at least one of the parents. Therefore, the larger the percentage of two-parent households in a county, the lower the crime rate may be ($\beta_2 < 0$). According to kidscount.org, the percentage of African American children in single-parent households is 3 times larger than the percentage of Caucasian children in single-parent households in the State of North Carolina in 2005. Extrapolating from this, we will assume that counties with higher `pctmin80` would have lower percentage of two-parent households ($\alpha1<0$). Therefore, the omitted variable bias is positive, which would scale the slope coefficient on `pctmin80` away from zero (more positive). Thus, the marginal effect and statistical significance of `pctmin80` on crime rate may also be overestimated by omitting the effect of two-parent households in the model.
 
-Potential Omitted Variable #4: Percentage of Highschool Graduates
+**Potential Omitted Variable #4**: Percentage of Highschool Graduates
 
 $$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*pct\_hs\_graduates $$
 $$ pct\_hs\_graduates = \alpha_0 + \alpha_1*pctmin80 $$
 
-The average years of education in a county may also be an important factor that influences crime rate. We assume that more graduation from highschool would result in a higher chance of employment at a higher paying job. Furthermore, time spent in school at a young age is believed to keep children out of trouble and away from bad influences. Therefore, a county with a higher percentage of highschool graduates may possibly have a lower crime rate ($\beta_2<0$). According to governing.com, the North Carolina highschool graduation rate of African Americans is 10% lower than the highschool graduation rate of Caucasians in 2011. By extrapolating this information, we assume that counties with higher percentage of minorities will have a lower percentage of highschool graduates ($\alpha_1<0$). This means that the omitted variable bias is positive, which would scale the slope coefficient on `pctmin80` away from zero (more positive). Thus, the marginal effect and statistical significance of `prbarr` on crime rate may also be overestimated by omitting the effect of education in the model.
+The average years of education in a county may also be an important factor that influences crime rate. We assume that more graduation from highschool would result in a higher chance of employment at a higher paying job. Furthermore, time spent in school at a young age is believed to keep children out of trouble and away from bad influences. Therefore, a county with a higher percentage of highschool graduates may possibly have a lower crime rate ($\beta_2<0$). According to governing.com, the North Carolina highschool graduation rate of African Americans is 10% lower than the highschool graduation rate of Caucasians in 2011. By extrapolating this information, we assume that counties with higher percentage of minorities will have a lower percentage of highschool graduates ($\alpha_1<0$). This means that the omitted variable bias is positive, which would scale the slope coefficient on `pctmin80` away from zero (more positive). Thus, the marginal effect and statistical significance of `pctmin80` on crime rate may also be overestimated by omitting the effect of education in the model.
 
-TO DO: Density?
+**Potential Omitted Variable #5**: Rate of Drug Abuse
 
-Potential Omitted Variable #5: Rate of Alchohol and Drug Abuse
+$$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*drug\_abuse $$
+$$ drug\_abuse = \alpha_0 + \alpha_1*pctmin80 $$
 
-$$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*substance\_abuse $$
-$$ substance\_abuse = \alpha_0 + \alpha_1*pctmin80 $$
-
-The last omitted variable we considered is the Rate of substance abuse as an indicator of crime. We assume that counties with a higher rate of substance abuse would also have a higher crime rate because the usage of illegal drugs is a crime and the abuse of alchohol can lead to crime ($\beta_2>0$). The war on drugs lead to a vastly disproportionate rate of arrest in minority groups, which means that in 1987, it may be that a county with a larger percentage of minorities would have a higher rate of substance abuse ($\alpha_1$). This means that the omitted variable bias is positive, which would scale the slope coefficient on `pctmin80` away from zero (more positive). Thus, the marginal effect and statistical significance of `prbarr` on crime rate may also be overestimated by omitting the effect of substance abuse in the model.
-
-https://drugabuse.com/country-vs-city-addictions-differ-says-samhsa/
-https://www.samhsa.gov/specific-populations/racial-ethnic-minority
-TO DO: Cities have more drug abusers, fewer alchohol abusers
-TO DO: In Cities, larger percentage of minorities in cities abuse drugs, larger percentage of caucasians in rural areas abuse druges.
+The last omitted variable we considered is the Rate of drug abuse as an indicator of crime. We assume that counties with a higher rate of drug abuse would also have a higher crime rate because the usage of illegal drugs is a crime ($\beta_2>0$). The war on drugs lead to a vastly disproportionate rate of arrest in minority groups, which means that in 1987, it may be that a county with a larger percentage of minorities would have a higher rate of substance abuse related arrests ($\alpha_1$). This means that the omitted variable bias is positive, which would scale the slope coefficient on `pctmin80` away from zero (more positive). Thus, the marginal effect and statistical significance of `pctmin80` on crime rate may also be overestimated by omitting the effect of substance abuse in the model.
 
 Something that strongly stands out in all of these omitted variables is that the OLS coefficient on `pctmin80` is strongly impacted by omitted variable bias. It is possible that the marginal effect of the percentage of minorities on crime rate is entirely an artifact of omitted variable bias. 
 
 # 6.0 Conclusion
 
-### Recommendation
+The best model for crime rate, have the following coefficients:
+* prbarr
+* density
+* polpc
+* pctmin80
+* pctymle
+Out of these coefficients, `polpc` was not significant, while the others were. As discussed in section **TO DO** police per capita has a positive slope coefficient with crmrte which is counterintuitive. We believe this is an artifact of counties of higher crime rate are hiring more police officers to combat crime. Therefore a policy of "more cops on the street" may not be very effective. However, higher "probability" of arrest may lead to lower crime rate. Therefore the campaign may want to pursue a policy of strict enforcement of the law by police officers to increase "probability" of arrest to help drive down crime rate.
 
-For interpretability purposes, the model was re-done using non-standardized variables:
--prbarr
--prbconv
--polpc
--density
--pctmin80
-
-Recommendation for political campaign:
-- police per capita has a positive slope coefficient with crmrte, and this may be due to more police are present in areas with high crmrte. This suggests that purely hiring more police officers may not be an impactful solution.
-- However probability of arrest and conviction both have a negative slope coefficients. The model suggests that perhaps a zero tolerance policy towards crime is needed to increase arrests and convictions and thus deter crimes from happening.
-- In terms areas with large minority population and high density, since these variable cannot be changed that much, perhaps a community outreach (e.g. job training program, afterschool programs, tutor/mentor program) to educate areas with a lot of minority can be done, so that crimes can be reduced in those areas.
-
-This is consistent with the campaign stance of being "tough on crime." The campaign may want to pursue a policy to better improve the district attorney's office, so that we can increase the probability of conviction.
-
-# TO BE SORTED LATER
-# TO BE SORTED LATER
-# TO BE SORTED LATER
-# TO BE SORTED LATER
-
-
-### Standardized Regression Model
-
-TO DO: Eliminate. Save the comments on the diagnostic plots for use in the non-standardized model analysis.
-
-A multi variable regression model was created using the data set that has been standardized above. 
-
-Then the model was evaluated for potential high leverage/influence data points as well as potential biases.
-
-In review the following findings were noted:
-- row 84 and 25 have a high Cook's distance and high standardized residuals, which means the data point can be problematic for the regression model. 
-- row 25 and 84 were also noted earlier to be an extreme outier for the wser variable. Thus based on this finding the point will be removed and the regression will be redone. 
-- Judging from the residuals vs. fitted plot the model may have some bias when the predicted value crmrte is between 0 to 0.04. Particularly the model tend to underpredict lower crmrates, and overpredict medium crmrte.
-- From the Normal Q-Q line, it looks like that majority of predictions follow the line, indicating a normal and independent distribution.
-
-```{R}
-#TODO clean out the warning
-#std_model <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data =  std_crime_df)
-
-#plot(std_model,1)
-#plot(std_model,5)
-#plot(std_model,2)
-
-#summary(std_model)$r.squared
-```
-
-```
-std_crime_df2 <- std_crime_df[-c(84,25),]
-
-std_model2 <- lm(crmrte ~ . - county-year-crmrte-urban-west-wtrd-wfed-wfir, data =  std_crime_df2)
-
-plot(std_model2,1)
-plot(std_model2,5)
-plot(std_model2,2)
-
-```
-
-TO DO: eliminate.
-
-In order to find which variables are most impactful to crmrte, the marginal R-squared against the standardized coefficients were reviewed. Based on the plots, the following variables were found to have the highest marginal R-squared and absolute slope coefficient:
--prbarr
--prbconv
--polpc
--density
--pctmin80
-
-
-```
-
-coeff_df = data.frame(summary(std_model)$coefficients)
-#summary(std_model)$r.squared
-
-#base R-Squared
-base_model <- lm(crmrte~.-county-year-crmrte, data=std_crime_df)
-base_r2 <- summary(base_model)$r.squared
-
-#create list of variables for the for-loop
-var_names <- colnames(std_crime_df)
-remove <- c('county',
-            'year',
-            'crmrte',
-            'urban',
-            'west',
-            'wtrd',
-            'wfed',
-            'wfir')
-var_names <- var_names[! var_names %in% remove]
-
-#initiate an empty vector to store the marginal R-Squared
-var_r2_delta = c()
-
-#loop through the variable names and store the marginal R-Squared
-for (i in var_names) {
-    fmla <- as.formula(paste("crmrte ~ - crmrte +", paste(var_names[! var_names %in% i], collapse= "+")))
-    delta_model <- lm(fmla, data=crime_df)
-    r2_delta <- base_r2-summary(delta_model)$r.squared
-    var_r2_delta <- c(var_r2_delta, r2_delta)
-}
-
-#put the variable and marginal R-squared in a dataframe
-mar_r2_df <- data.frame(v1=var_names, v2=var_r2_delta)
-colnames(mar_r2_df) <- c('variable', 'marginalr2')
-
-#sort dataframe by marginal R-squared in a descending order
-#mar_r2_df <- mar_r2_df[rev(order(mar_r2_df$marginalr2)),]
-
-plot(abs(coeff_df[-c(1),]$Estimate),mar_r2_df$marginalr2)
-
-subset(mar_r2_df, marginalr2 > .04)
-```
+The other variables (density, pctymle, pctmin) however cannot be directly affected by a policy, but these variables are affected by the ommited variables that were discussed above, which gives us an idea where to focus our efforts. For example, we may want to create a job placement program in dense areas with high percentage of minority population, so that we can decrease unemployment rate and poverty rate and therefore reduce crime rate. Additionally, we may want to do mentorship programs in areas with high percentage of minority that have young males who lack positive role models and have a low high school graduation rate in hopes of reducing crime rate. Lastly, we may want to pursue an anti drug campaign to reduce crime.
 
