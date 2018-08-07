@@ -217,8 +217,6 @@ abline(lm(density~wfir, data = crime_df), col="red")
 
 # 4.0 Regression Models: Base Model
 
-TO DO: create a new section with 6 CLM assumptions for the best model, and trim down this section.
-
 The initial model created contains only those variables directly related to the candidate's positions on being pro-police, for strict enforcement, and concern with inner city and minority communities. Therefore, the variables we have chosen to represent these positions are: probability of arrest (prbarr), density, police per capita (polpc), and the percentage of minorities (pctmin80). 
 
 ```{R}
@@ -226,41 +224,38 @@ The initial model created contains only those variables directly related to the 
 model1 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 , data = crime_df)
 ```
 
-After creating the model, we will start by evaluating it against the six Classical Linear Model assumptions.
+After creating the model, we evaluated it against the six Classical Linear Model assumptions.
 
-**CLM 1. Linear population model:** We do not have to worry about this assumption at the moment because we haven’t constrained the error term. 
-
-**CLM 2. Random Sampling:** To check random sampling, we need domain knowledge and an understanding of how the data were collected.  There are 100 counties in North Carolina, and there are data for 91 of them.  Without knowledge of the 9 excluded counties, no statement regarding the validity of random sampling can be made.
-
-**CLM 3. No perfect multicollinearity:** There is no need to explicitly check for perfect collinearity, because R would've reported a warning if this occurred.  Furthermore, the correlation matrix shown in section "__TO DO____" also shows that there is no perfect collinearity.
-
-**CLM 4. Zero Conditional Mean:**  $E(u|x)=0$. For this model, the residuals vs. fitted values plot shown below reveals a relatively flat spline centered around zero. Therefore, there does not seem to be a clear deviation from the zero conditional mean and the assumption holds.
+For this model, the residuals vs. fitted values plot shown below reveals a relatively flat spline centered around zero. Therefore, there does not seem to be a clear deviation from the zero conditional mean and the assumption holds. We decided to include this plot so it can be compared with the residuals vs. fitted plot of our other regression models.
 
 ```{R}
 # Residuals vs. Fitted Plot
 plot(model1, which=1)
 ```
 
-**CLM 5. Homoscedasticity:** In the residuals vs. fitted values plot shown in **CLM 4**, the data points seem to form a cone shape which suggests some heteroscedasticity. In the scale-location plot below, there seems to be a slight positive slope across the range of fitted values between 0.02 and 0.04. Furthermore, the Breusch-Pagan test shown below has a p-value of 6.278e-05 which indicates that the null hypothesis of homoscedasticity can be rejected.  When evaluating the statistical significance of calculated model coefficients, heteroscedastic-robust standard errors will be used.
+In the residuals vs. fitted values plot shown above, the data points seem to form a cone shape which suggests some heteroscedasticity. In the scale-location plot below, there seems to be a slight positive slope across the range of fitted values between 0.02 and 0.04. 
 
 ```{R}
 # Scale-Location Plot
 plot(model1, which=3)
+```
 
+Furthermore, the Breusch-Pagan test shown below has a p-value of 4.866e-05 which indicates that the null hypothesis of homoscedasticity can be rejected. Because of this, heteroscedastic-robust standard errors will be used when evaluating the statistical significance of calculated model coefficients
+
+```{R}
 # Breusch-Pagan
 bptest(model1)
 ```
 
-**CLM 6. Normality of errors:** In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. However, the standardized residuals show some deviation from the straight line at the extreme ends of the distribution. This suggests some skew at the extreme ends of our residuals. Furthermore, the Shapiro test shown below has a p value of 0.0002 which means we can reject the null hypothesis of the residuals having a normal distribution.
+In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. However, the standardized residuals show some deviation from the straight line at the extreme ends of the distribution. This suggests that our residuals are skewed at the extreme ends. Furthermore, the Shapiro test shown below has a p-value of 0.0002 which means we can reject the null hypothesis of the residuals having a normal distribution.
 
 ```{R}
 # Q-Q plot of Standardized Residuals
 plot(model1, which=2)
-
 shapiro.test(model1$residuals)
 ```
 
-To further verify this observation, a histogram of this model's residuals is shown below. The histogram shows approximate normality near the center of the distribution, but also some evidence of skewness; especially on the positive end. However, the Central Limit Theorem (CLT) claims that if the sample size is large enough we can assume that the residuals have a normal sampling distribution. For distributions with a very strong skew, a much larger sample size may be required, but for minor skews as in this case, the rule of thumb is that the CLT can be applied when the sample size is greater than 30. The sample size used for this model is 91 which should be enough for the CLT to hold.
+To further verify this observation, a histogram of this model's residuals is shown below. The histogram shows approximate normality near the center of the distribution, but also some evidence of skewness; especially on the positive end. However, the Central Limit Theorem (CLT) claims that if the sample size is large enough, we can assume that the residuals have a normal sampling distribution. For distributions with a very strong skew, a much larger sample size may be required, but for minor skews as in this case, the rule of thumb is that the CLT can be applied when the sample size is greater than 30. The sample size used for this model is 91 which should be enough for the CLT to hold.
 
 ```{R}
 hist(model1$residuals, breaks=20)
@@ -484,7 +479,7 @@ plot(model2, which=3)
 bptest(model2)
 ```
 
-**CLM 6. Normality of errors:** In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. The standardized residuals show some deviation from the straight line at the high end of the distribution. This suggests some skew at the high end of our residuals. However, the Shapiro-Wilk test shown below has a p value of 0.05755 which means we cannot reject the null hypothesis of the residuals having a normal distribution.
+**CLM 6. Normality of errors:** In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. The standardized residuals show some deviation from the straight line at the high end of the distribution. This suggests some skew at the high end of our residuals. However, the Shapiro-Wilk test shown below has a p-value of 0.05755 which means we cannot reject the null hypothesis of the residuals having a normal distribution.
 
 ```{R}
 # Q-Q plot of Standardized Residuals
