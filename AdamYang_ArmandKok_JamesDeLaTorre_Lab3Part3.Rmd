@@ -262,7 +262,7 @@ hist(model1$residuals, breaks=20)
 ```
 
 
-Based on our review of the six CLM assumptions, this is a valid linear model. We replaced the regular standard errors with the heteroskedasticity-robust standard errors. The resulting coefficients and parameters of the model are shown below:
+Based on our review of the six CLM assumptions, this is a valid linear model. We replaced the regular standard errors with the heteroscedasticity-robust standard errors. The resulting coefficients and parameters of the model are shown below:
 
 ```{R}
 linearHypothesis(model1, c("prbarr = 0", " density = 0", "polpc = 0", "pctmin80 = 0"), vcov = vcovHC)
@@ -291,37 +291,27 @@ plot(model1, which=5)
 
 ## 4.1 Regression Model: Second Model
 
-*Does this model include covariates meant to increase the accuracy of the regression? Has the team justified inclusion of each of these additional variables? Does the team identify what they want to measure with each coefficient? Does the team interpret the result of the regression in a thorough and convincing manner. Does the team evaluate all 6 CLM assumptions? Are the conclusions they draw based on this evaluation appropriate? Did the team interpret the results in terms of their research question?*
-
-*One model that includes key explanatory variables and only covariates that you believe increase the accuracy of your results without introducing substantial bias (for example, you should not include outcome variables that will absorb some of the causal effect you are interested in). This model should strike a balance between accuracy and parsimony and reflect your best understanding of the determinants of crime.*
-
-
-
-A second model was created which included the three original explanatory variables (probability of arrest, `prbarr`; population per square mile, `density`; and police per capita, `polpc`) plus two additional variables--the "probability" of conviction, `prbconv` and percentage of a county's population comprised of young males `pctymle`.  The probability of conviction was selected based on the thought that if someone believes he is more likely to be convicted if he commits a crime, he may be less inclined to take the risk of committing a crime. The percent young males variable was included because we believe that young males are responsible for a disproportionally large share of total crimes committed. Including these variables should improve the accuracy of our inferences for crime rate.
-
+A second model was created which included the four original explanatory variables (probability of arrest, `prbarr`; population per square mile, `density`; and police per capita, `polpc`) plus two additional variables--the "probability" of conviction, `prbconv` and percentage of a county's population comprised of young males `pctymle`.  The probability of conviction was selected based on the thought that if someone believes he is more likely to be convicted of a crime, he may be less inclined to take the risk of committing the crime. The percent young males variable was included because we believe that young males are responsible for a disproportionally large share of total crimes committed. Including these variables should improve the accuracy of our inferences for crime rate.
 
 ```{R}
-
-# new: prbconv pctymle
+# Creating Model 2
 model2 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + prbconv + pctymle, data = crime_df)
 ```
 
-This second model produced some unexpected results with respect to the linear model assumptions.  First, the residuals show more deviation from the zero conditional mean assumption than our previous model exhibited.  The residuals vs. fitted values plot below shows positive residuals for fitted values less than 0.015.  Perhaps there is an omitted variable responsible for this, or perhaps there is a nonlinear relationship between some of the variables in the model and crime rate.
+This second model produced some unexpected results with respect to the linear model assumptions.  First, the residuals show more deviation from the zero conditional mean assumption than our previous model exhibited. The residuals vs. fitted values plot below shows a negative slope for fitted values in the range of 0 and 0.04. Perhaps one of the models we added is introducing some sort of bias to our model.
 
 ```{R}
 plot(model2, which=1, caption="", main="Residuals vs Fitted (Model 2)")
 ```
 
-Judging from the Scale-Location plot below, model 2 still exhibits heteroscedasticity, albeit slighthly less heteroscedastic than model 1. Furthermore, the Breusch-Pagan test has a p-value of 0.0005, which reaffirms the findings from the Scale-Location plot. Using heteroscedastic-robust standard errors when evaluating the model coefficients should prevent this from being a problem.
+Judging from the Scale-Location plot below, model 2 still exhibits heteroscedasticity, albeit slighthly less so than model 1. Furthermore, the Breusch-Pagan test has a p-value of 0.0007, which reaffirms the findings of heteroscedasticity from the Scale-Location plot. Using heteroscedastic-robust standard errors when evaluating the model coefficients should prevent this from being a problem.
 
 ```{R}
 plot(model2, which=3, caption="", main="Scale-Location (Model 2)")
 bptest(model2)
 ```
 
-
-The summary of the second model's output is shown below.
-
+The summary of the second model's parameters is shown below.
 
 ```{R}
 paste("Model 2 adj.r.square:", summary(model2)$adj.r.squared)
@@ -329,22 +319,22 @@ coeftest(model2, vcovHC)
 ```
 The second model has an adjusted r-squared value of 0.80, meaning 80% of the variation in crime rate is explained by the explanatory variables in the model.  The police per capita variable, `polpc`, which was not statistically significance in the first model is now significant in this second model.  As for the two variables added in the second model, the probability of conviction, `prbconv`, is highly statistically significant, while the percent young male, `pctymle`, variable, suprisingly, is not.
 
-In the second model, the slope coefficients can be interpreted as follows:
+In the second model, the significant slope coefficients can be interpreted as follows:
 
-- For every 1 percentage point increase in the probability of arrest, crime decreases by 0.0006 crimes per person.
-- For every 1 additional person per square mile, crime increases by 0.0056 crimes per person.
-- For every 1 additional police officer per person, crime increases by 7.7 crimes per person.
+- For every 1 percentage point increase in the probability of arrest, crime decreases by 0.062 crimes per person.
+- For every 1 additional person per square mile, crime increases by 0.0055 crimes per person.
+- For every 1 additional police officer per person, crime increases by 8.00 crimes per person.
 - For every 1 percentage point increase in minority population, crime increases by 0.00037 crimes per person
-- For every 1 percentage point increase in probability of conviction, crime decreases by 0.00021 crimes per person.
+- For every 1 percentage point increase in probability of conviction, crime decreases by 0.021 crimes per person.
 
 
 ```{R}
 plot(model2, which = 5)
 ```
 
-Judging from the Residuals vs. Leverage plot above, point 51 no longer has Cook's distance greater than 1 like it did in model 1. This indicates that point 51 is not influential on the new regression model. This is due to the additional information that the new variables bring to the model.
+Judging from the Residuals vs. Leverage plot above, point 51 no longer has Cook's distance greater than 1 like it did in model 1. This indicates that point 51 is not influential on the new regression model and is due to the additional information that the new variables bring to the model.
 
-In addition, the Residual vs. Leverage plot above, we see that there are fewer data points that have standardized residuals over 2. Therefore, model 2 represents our data better than model 1 does. 
+Furthermore, the Residual vs. Leverage plot above also shows that there are fewer data points that have standardized residuals over 2. Therefore, model 2 represents our data better than model 1 does. 
 
 # 4.2 Regression Third model
 The following is the model that contains almost all available variables as explanatory variables with the exception of variables we excluded due to high level of multi-collinearity.
@@ -353,11 +343,9 @@ The following is the model that contains almost all available variables as expla
 model3 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + prbconv + pctymle + log(wcon) + log(wtuc) + log(wser) + log(wmfg) + log(wsta) + log(wloc) + log(wser) + taxpc  + central + mix + prbpris + avgsen, data = crime_df)
 ```
 
-Model 3 for most part follows meets most of the CLM assumptions, however there are exceptions, and some other interesting points  discussed below.
+Upon inspection, model 3 meets most of the CLM assumptions. However, there are exceptions and some other interesting points  discussed below.
 
-**CLM 5. Homoscedasticity:** 
-
-The Scale-Location plot below reveals that there seems to be heteroscedacity given that the spline is not horizontal. Howver, the Breusch-Pagan test has a p-value greater than 0.05, meaning we cannot reject the null hypothesis of homoscedasticity. Based on the conflicting findings, to be conservative, heteroscedastic-robust standard errors will be used to perform any sort of statistical test for the model.
+The Scale-Location plot below reveals a spline that is somewhat horizontal. It is hard to claim homoscedasticity however, so the Breusch-Pagan test was conducted. The Breusch-Pagan test has a p-value greater than 0.05, meaning we cannot reject the null hypothesis of homoscedasticity. Despite these findings, heteroscedastic-robust standard errors will be used to perform any sort of statistical test for the model.
 
 ```{R}
 #scale location plot
@@ -401,7 +389,7 @@ plot(model3, which = 5)
 The regression table below shows the summary of the three models that were created.
 
 ```{R}
-# Replace regular Standard Errors with the heteroskedasticity-robust Standard Errors
+# Replace regular Standard Errors with the heteroscedasticity-robust Standard Errors
 se.model1 <- sqrt(diag(vcovHC(model1)))
 se.model2 <- sqrt(diag(vcovHC(model2)))
 se.model3 <- sqrt(diag(vcovHC(model3)))
@@ -494,7 +482,7 @@ To further verify this observation, a histogram of this model's residuals is sho
 hist(model2$residuals, breaks=20)
 ```
 
-Based on our review of the six CLM assumptions, model 2 may not be considered an unbiased estimator, especially since it violates the zero conditional mean. To draw inferences on the coefficients, we replaced the regular standard errors with the heteroskedasticity-robust standard errors. 
+Based on our review of the six CLM assumptions, model 2 may not be considered an unbiased estimator, especially since it violates the zero conditional mean. To draw inferences on the coefficients, we replaced the regular standard errors with the heteroscedasticity-robust standard errors. 
 
 **Adjusting Model Specifications**
 After reviewing the 6 CLM assumptions, the zero-conditional mean assumption was violated, upon investigation, we found that the addition of `prbconv` introduced some bias when `prbarr` is also included in the regression model. So to improve the model and meet the zero-conditional mean assumption, we decided to remove `prbconv` from the regression model, and created model 4 below
@@ -532,7 +520,7 @@ Below is the final heteroscedastic robust coefficient test, and the significant 
 - For every percentage point increase in young male population, crime increases by 0.00129 crimes per person.
 
 ```{R}
-# Replace regular Standard Errors with the heteroskedasticity-robust Standard Errors
+# Replace regular Standard Errors with the heteroscedasticity-robust Standard Errors
 se.model2 <- sqrt(diag(vcovHC(model2)))
 se.model4 <- sqrt(diag(vcovHC(model4)))
 
