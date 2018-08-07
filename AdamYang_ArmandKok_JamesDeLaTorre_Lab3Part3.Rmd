@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60),tidy=TRUE)
 
 Our team has been hired by a local political campaign to provide research on North Carolina crime statistics and to generate policy suggestions for reducing crime. Our candidate seeks to portray herself as being “pro-cop” and “tough on crime”, and she espouses strong policing and enforcement.  She also has a strong desire to understand the situations faced by the minority population within the state, and has expressed a keen interest in understanding how minority communities are impacted by crime.
 
-The crime statistics dataset provided for analysis is a subset of the data used by Cornwell and W. Trumball in their 1994 study. The dependent variable of our study is the crimes commited per capita, given as `crmrate`. There are 24 other variables in the dataset, each of which can be potential modulators of the crime rate. We aim to build a linear model that regresses `crmrate` on the key variables in the dataset. In particular, we are interested in examining the potential of the following policies in reducing crime rate:
+The crime statistics data set provided for analysis is a subset of the data used by Cornwell and W. Trumball in their 1994 study. The dependent variable of our study is the crimes committed per capita, given as `crmrate`. There are 24 other variables in the data set, each of which can be potential modulators of the crime rate. We aim to build a linear model that regresses `crmrate` on the key variables in the data set. In particular, we are interested in examining the potential of the following policies in reducing crime rate:
 
   * Policy to increase the police per capita of a county
   * Policy to implement a more stringent arrest protocol
@@ -30,7 +30,7 @@ In addition, we aim to identify other factors that may influence crime and attem
 
 # 2.0 Data Loading and Cleaning
 
-The dataset provided is a sample from 91 counties in North Carolina, containing information from 1987.  The variables in the dataset and their meanings are shown below:
+The data set provided is a sample from 91 counties in North Carolina, containing information from 1987.  The variables in the data set and their meanings are shown below:
 
 |**Variable**|**Label**|      |**Variable**|**Label**|
 |-------|----|----|------|--------|
@@ -86,7 +86,7 @@ Immediate inspection of the data revealed a few requirements for data cleanup.
 
 - The last 6 rows of the data set were blanks.  These empty records were deleted.
 - One row had values of 1 for both `west` and `central`, placing that county in two regions simultaneously.  It is unknown whether this is possible, but currently there has been no reason to delete this particular row so the data will be kept for now.
-- The `prbconv` variable, representing the "probability of conviction" was read in as a factor (a cateogorical variable) instead of a numeric variable.  This variable was converted to numeric.
+- The `prbconv` variable, representing the "probability of conviction" was read in as a factor (a categorical variable) instead of a numeric variable.  This variable was converted to numeric.
 
 ```{R}
 # get rid of rows with missing values (this only kills the 6 blank rows)
@@ -105,7 +105,7 @@ summary(crime_df[,c('prbarr', 'prbconv', 'density')])
 crime_df$density[79] = NA
 ```
 
-A historgram was plotted for each of the variables and no evidence of top or bottom coding was found. However, we did notice a few other strong outliers that will be discussed in the next section.
+A histogram was plotted for each of the variables and no evidence of top or bottom coding was found. However, we did notice a few other strong outliers that will be discussed in the next section.
 
 ## 2.3 Extreme Value Identification
 
@@ -117,7 +117,7 @@ After generating histograms to review the distributions of the different variabl
 - wser - row 84
 - taxpc - row 25
 
-The boxplots shown below will give a sense of how far these points are from the IQR. However, upon further review, our team could not come up with concrete reasons to why these observations are invalid. Therefore, we can not justify omitting these data points.
+The box-plots shown below will give a sense of how far these points are from the IQR. However, upon further review, our team could not come up with concrete reasons to why these observations are invalid. Therefore, we can not justify omitting these data points.
 
 ```{R}
 m <- rbind(c(1, 2), c(3, 4))
@@ -153,13 +153,13 @@ hist(crime_df$pctmin80, main="Histogram of pctmin80", breaks=50)
 
 The histogram of `polpc` shows the extreme value mentioned in section 2.3. Besides that point, this variable seems to resemble a normal distribution with some positive skew. The histogram of `prbarr` also shows a point with an extreme value, which is the same record that has an extreme value for `polpc`. Similar to `polpc`, `prbarr` also resembles a normal distribution with some positive skew. The histogram of `density`, however, seems to have a stronger positive skew than the other variables of interest. This might indicate that North Carolina is a state with fewer counties with large cities. The histogram of `pctmin` lies between 0 and 100 which is what we would expect to see. Furthermore, it is interesting that this variable is somewhat equally distributed between 0 and 60%.
 
-With the exception of the one record that has extreme values for both `polpc` and `prbarr`, the key variables in our dataset that most closely relate to our candidate's policy interests appear to have distributions that can be used for modeling without any transformations.  As we build regression models with these variables, we will watch for high influence from the record with extreme values (#51).
+With the exception of the one record that has extreme values for both `polpc` and `prbarr`, the key variables in our data set that most closely relate to our candidate's policy interests appear to have distributions that can be used for modeling without any transformations.  As we build regression models with these variables, we will watch for high influence from the record with extreme values (#51).
 
 
 
 ## 3.1 Scatterplot Matrix
 
-To visualize the relationship between crime rate and our explanatory variables of interest, a scatterplot matrix was generated.
+To visualize the relationship between crime rate and our explanatory variables of interest, a scatter plot matrix was generated.
 
 
 ```{R}
@@ -199,9 +199,9 @@ After reviewing the correlation matrix in detail, there were 5 pairs of variable
 
 - `urban` (82% correlation with `density`.  Kept `density` because it is a continuous variable providing similar, but more information than the categorical `urban` variable)
 - `west` (-64% correlation with `pctmin80`.  Kept `pctmin80` because it is one of the main drivers of our policies and we don't believe west would be a strong driver.)
-- `wtrd`, `wfed`, `wfir` (each of these had correlations >60% with eachother and/or with `density` or other wage columns. We kept `density` because it can act as a proxy for the greatest number of other variables.)
+- `wtrd`, `wfed`, `wfir` (each of these had correlations >60% with each other and/or with `density` or other wage columns. We kept `density` because it can act as a proxy for the greatest number of other variables.)
 
-Below are the scatterplots of the different correlated variables.
+Below are the scatter plots of the different correlated variables.
 
 ```{R}
 m <- rbind(c(1, 2,3), c(4, 5,0))
@@ -281,7 +281,7 @@ The adjusted r-squared of the model is relatively high at 0.65. This means that 
 coeftest(model1, vcovHC)
 ```
 
-Furthermore, the results of our initial model shows that the probability of arrest is statistically significant as a modulator of crime, while the density and minority percentage of each county are strongly statistically significant. The police per capita, on the other hand, is not. The slope coefficients tell us that for every 0.01 point increase in `prbarr`, there is a corresponding 0.00046 decrease in crimes per person. The model also suggests that by increasing the density of a county by 1 person per square mile, crime commited per person may rise by 0.0074. Finally, for every percentage point increase of minorities in a county, crime commited per person may rise by 0.0003. The model also suggests that by increasing the police per capita by 1 will result in 5 additional crimes commited per person. However, this slope coefficient is shown to be statistically insignificant.
+Furthermore, the results of our initial model shows that the probability of arrest is statistically significant as a modulator of crime, while the density and minority percentage of each county are strongly statistically significant. The police per capita, on the other hand, is not. The slope coefficients tell us that for every 0.01 point increase in `prbarr`, there is a corresponding 0.00046 decrease in crimes per person. The model also suggests that by increasing the density of a county by 1 person per square mile, crime committed per person may rise by 0.0074. Finally, for every percentage point increase of minorities in a county, crime committed per person may rise by 0.0003. The model also suggests that by increasing the police per capita by 1 will result in 5 additional crimes committed per person. However, this slope coefficient is shown to be statistically insignificant.
 
 To further assess the strength of our model, we can take a look at the residuals vs. leverage plot shown below. Here we can see that data point 51, has a Cook's distance greater than 1, meaning it has high influence over the model. As shown in section 2.3 this data point has `polpc` and `prbarr` values multiple times higher than the next highest values for these variables. If this data point is not representative of the general population in North Carolina, then it may hurt the accuracy of our model. However, we investigated the other values of this county and could not justify removing this data point without further information.
 
@@ -295,7 +295,7 @@ plot(model1, which=5)
 
 ## 4.1 Regression Model: Second Model
 
-A second model was created which included the four original explanatory variables (probability of arrest, `prbarr`; population per square mile, `density`; and police per capita, `polpc`) plus two additional variables--the "probability" of conviction, `prbconv` and percentage of a county's population comprised of young males `pctymle`.  The probability of conviction was selected based on the thought that if someone believes he is more likely to be convicted of a crime, he may be less inclined to take the risk of committing the crime. The percent young males variable was included because we believe that young males are responsible for a disproportionally large share of total crimes committed. Including these variables should improve the accuracy of our inferences for crime rate.
+A second model was created which included the four original explanatory variables (probability of arrest, `prbarr`; population per square mile, `density`; and police per capita, `polpc`) plus two additional variables--the "probability" of conviction, `prbconv` and percentage of a county's population comprised of young males `pctymle`.  The probability of conviction was selected based on the thought that if someone believes he is more likely to be convicted of a crime, he may be less inclined to take the risk of committing the crime. The percent young males variable was included because we believe that young males are responsible for a disproportionately large share of total crimes committed. Including these variables should improve the accuracy of our inferences for crime rate.
 
 ```{R}
 # Creating Model 2
@@ -308,7 +308,7 @@ This second model produced some unexpected results with respect to the linear mo
 plot(model2, which=1, caption="", main="Residuals vs Fitted (Model 2)")
 ```
 
-Judging from the Scale-Location plot below, model 2 still exhibits heteroscedasticity, albeit slighthly less so than model 1. Furthermore, the Breusch-Pagan test has a p-value of 0.0007, which reaffirms the findings of heteroscedasticity from the Scale-Location plot. Using heteroscedastic-robust standard errors when evaluating the model coefficients should prevent this from being a problem.
+Judging from the Scale-Location plot below, model 2 still exhibits heteroscedasticity, albeit slightly less so than model 1. Furthermore, the Breusch-Pagan test has a p-value of 0.0007, which reaffirms the findings of heteroscedasticity from the Scale-Location plot. Using heteroscedastic-robust standard errors when evaluating the model coefficients should prevent this from being a problem.
 
 ```{R}
 plot(model2, which=3, caption="", main="Scale-Location (Model 2)")
@@ -321,7 +321,7 @@ The summary of the second model's parameters is shown below.
 paste("Model 2 adj.r.square:", summary(model2)$adj.r.squared)
 coeftest(model2, vcovHC)
 ```
-The second model has an adjusted r-squared value of 0.80, meaning 80% of the variation in crime rate is explained by the explanatory variables in the model.  The police per capita variable, `polpc`, which was not statistically significance in the first model is now significant in this second model.  As for the two variables added in the second model, the probability of conviction, `prbconv`, is highly statistically significant, while the percent young male, `pctymle`, variable, suprisingly, is not.
+The second model has an adjusted r-squared value of 0.80, meaning 80% of the variation in crime rate is explained by the explanatory variables in the model.  The police per capita variable, `polpc`, which was not statistically significance in the first model is now significant in this second model.  As for the two variables added in the second model, the probability of conviction, `prbconv`, is highly statistically significant, while the percent young male, `pctymle`, variable, surprisingly, is not.
 
 In the second model, the significant slope coefficients can be interpreted as follows:
 
@@ -376,12 +376,12 @@ paste("adj.r.square:", summary(model3)$adj.r.squared)
 coeftest(model3, vcov = vcovHC)
 ```
 
-Compared to model 2, the adjusted R-squared is only marginally higher, which suggest that we will need to further evaluate the joint significance of the additional variables that were included as part of model 3. The following are the interpretation of the signifcant coefficients:
+Compared to model 2, the adjusted R-squared is only marginally higher, which suggest that we will need to further evaluate the joint significance of the additional variables that were included as part of model 3. The following are the interpretation of the significant coefficients:
 
 - For every 0.01 increase in probability arrest, crime rate decreases by 0.00053.
 - For every 1 additional person per square mile, crime increases by 0.0055 crimes per person.
-- For every 1 addtional police officer per person, crime increases by 7.2 crimes per person.
-- For every percentage point increase in minority populatoin, crime increases by .0004 crimes per person.
+- For every 1 additional police officer per person, crime increases by 7.2 crimes per person.
+- For every percentage point increase in minority population, crime increases by .0004 crimes per person.
 - For every 0.01 increase in probability of conviction, crime decreases by 0.00019 crimes per person
 - For every 0.01 increase in young male population, crime increases by 0.00092 crimes per person.
 
@@ -412,17 +412,15 @@ stargazer(model1, model2, model3, title = "Regression Models", type = "latex", r
 ```
 
 
-`polpc` as it can be seen in the table, this variable only became significant after more variables were introduced in model 2 and 3. This may be due to the omitted variable effect that `prbconv` had on `polpc`. We believe that higher `prbconv` would result in lower `crmrte` while higher `polpc` would result in higher `prbconv`. Therefore, the omitted variable bias would be negative and scale the OLS coefficient on `polpc` towards 0. This would cause the marginal effect of `polpc` to be underestimated. By introducing `prbconv` in model 2, we are negating this omitted variable bias which is why `polpc` became statistically significant. The slope coefficient of `polpc` has a positive slope which suggests that counties with higher police per capita would have a higher crime rate, which seems to be counterintuitive. It is possible that counties with higher crime rates are hiring more policemen in hopes of decreasing crime, but the presence of these extra policemen does not have the impact on crime rate that they hoped. Therefore increasing the police force may not be the most effective policy to decrease the crime rate.
+`polpc` as it can be seen in the table, this variable only became significant after more variables were introduced in model 2 and 3. This may be due to the omitted variable effect that `prbconv` had on `polpc`. We believe that higher `prbconv` would result in lower `crmrte` while higher `polpc` would result in higher `prbconv`. Therefore, the omitted variable bias would be negative and scale the OLS coefficient on `polpc` towards 0. This would cause the marginal effect of `polpc` to be underestimated. By introducing `prbconv` in model 2, we are negating this omitted variable bias which is why `polpc` became statistically significant. The slope coefficient of `polpc` has a positive slope which suggests that counties with higher police per capita would have a higher crime rate, which seems to be counter-intuitive. It is possible that counties with higher crime rates are hiring more policemen in hopes of decreasing crime, but the presence of these extra policemen does not have the impact on crime rate that they hoped. Therefore increasing the police force may not be the most effective policy to decrease the crime rate.
 
 `prbarr` became more significant, and the slope coefficient became more negative in model 2 and model 3. This may be due to the omitted variable effect that `prbconv` had on `prbarr`. We believe that higher `prbconv` would lead to lower `crmrte`, while higher `prbarr` would result in lower `prbconv`. This can be interpreted as when policemen are being overzealous in making arrests, we are getting a lower conviction rate. Therefore, the omitted variable bias would be positive and scale the OLS coefficient on `prbarr` towards 0. This would cause the marginal effect of `prbarr` to be underestimated. By introducing `prbconv` in model 2, we are negating this omitted variable bias which is why `prbarr` became more statistically significant. So practically, the model suggests that we need to reach a level of balance between arrests and conviction.
 
-`prbconv`, when introduced to the model, is shown to be a significant variable with a negative slope. This indicates that a higher probability of conviction results in a lower crime rate. Practically, this means that a higher likelihood of conviction may deter people from comitting crime. 
+`prbconv`, when introduced to the model, is shown to be a significant variable with a negative slope. This indicates that a higher probability of conviction results in a lower crime rate. Practically, this means that a higher likelihood of conviction may deter people from committing crime. 
 
 `pctymle` did not become significant until model 3, when additional variables were introduced. This may be due to the additional information that the wage variables provide and how they might impact the young male population. Practically, this can be interpreted as: when wages are low and there is a high percentage of young men in a county, then the young men may have more incentive to commit crimes. There may be an omitted variable effect on the `pctymle` by the wages variables. Upon closer inspection of the various wage variables, `wsta`, `wser` and `wmfg`, while not significant, do have negative slopes. From a practical standpoint, perhaps young men tend to have state, service and/or manufacturing jobs, and the higher the wages for those three industries, the less incentive there is for the young men to commit crime.
 
 # 4.4 Model Selection and Assessment
-
-TO DO: create model 4, and discuss why it is not worth it to add additional variables to the model (i.e. because the model do not improve in a statistically significant way), this may be due to omitted variable bias from a variable that is not included in the data set, and then segway from here to the omitted variable discussion.
 
 **Justification**
 To help select the best model, we ran a joint significance test to to see if the variables that were added for model 2 and model 3 improved the regression in a statistically significant way.
@@ -515,7 +513,7 @@ Upon inspection of the residual vs fitted plot below , it appears that model 4 d
 plot(model4, which = 1)
 ```
 
-However, as a tradeoff, model 4's Normal Q-Q plot shows that our residuals have lost normality. We confirmed this by comparing the shapiro test of our two models. As shown below, the p-value of model 4 is 6.399e-05, which means we can reject the null hypothesis of normal error distribution, while the p-value for model 2 is 0.09232, which means we cannot reject the null hypothesis. However, since we have a sample size of 91 we can invoke the CLT to rely on the asymptotic properties of OLS. Therefore, we believe this trade-off may be worth improving the zero conditional mean assumption.
+However, as a trade-off, model 4's Normal Q-Q plot shows that our residuals have lost normality. We confirmed this by comparing the Shapiro test of our two models. As shown below, the p-value of model 4 is 6.399e-05, which means we can reject the null hypothesis of normal error distribution, while the p-value for model 2 is 0.09232, which means we cannot reject the null hypothesis. However, since we have a sample size of 91 we can invoke the CLT to rely on the asymptotic properties of OLS. Therefore, we believe this trade-off may be worth improving the zero conditional mean assumption.
 
 ```{R}
 plot(model4, which = 2)
@@ -523,16 +521,16 @@ shapiro.test(model4$residuals)
 shapiro.test(model2$residuals)
 ```
 
-Another trade off is that we now have a highly influential data point (point #51), as we can see below in the Residuals vs. Leverage plot. We also increased the number of standardized residuals that are greater than 2, indicating that model 4 is not as good of a represantation of the data set compared to model 2.
+Another trade off is that we now have a highly influential data point (point #51), as we can see below in the Residuals vs. Leverage plot. We also increased the number of standardized residuals that are greater than 2, indicating that model 4 is not as good of a representation of the data set compared to model 2.
 
 ```{R}
 plot(model4, which = 5)
 ```
 
-Despite the tradeoffs mentioned above, we think it is more important to meet the zero-conditional mean assumption, since it is the strictest among the 6 CLM assumptions that we need to meet in order to get a unbiased estimator.
+Despite the trade-offs mentioned above, we think it is more important to meet the zero-conditional mean assumption, since it is the strictest among the 6 CLM assumptions that we need to meet in order to get a unbiased estimator.
 
 Below is the final heteroscedastic robust coefficient test, and the significant coefficients can be interpreted as follows:
-- For every percentage point increase in increase in probability arrest, crime rate decreases by 0.0004.
+- For every percentage point increase in probability of arrest, crime rate decreases by 0.0004.
 - For every 1 additional person per square mile, crime increases by .007 crimes per person.
 - For every percentage point increase in minority population, crime increases by .0003 crimes per person.
 - For every percentage point increase in young male population, crime increases by 0.00128 crimes per person.
@@ -546,13 +544,15 @@ se.model4 <- sqrt(diag(vcovHC(model4)))
 stargazer(model2, model4, title = "Regression Models", type = "latex", report = "vcsp", omit.stat = "f", se = list(se.model2, se.model4), star.cutoffs = c(0.05,0.01,0.001), font.size = "footnotesize", column.sep.width = "1pt")
 ```
 
+
+
 # 5.0 Omitted Variables Discussion
 
-Even by including all of the relevant variables provided in the data set to the linear regression, the resulting model may still be biased. This is because of potentially influential omitted variables that is either not provided, or is difficult to obtain. Below are some of the omitted variables that might be important along with how their absense may affect our results.
+Even by including all of the relevant variables provided in the data set to the linear regression, the resulting model may still be biased. This is because of potentially influential omitted variables that is either not provided, or is difficult to obtain. Below are some of the omitted variables that might be important along with how their absence may affect our results.
 
-**Potential Omitted Variable #1**: Financial Wellfare (Poverty Rate and Unemployment)
+**Potential Omitted Variable #1**: Financial Welfare (Poverty Rate and Unemployment)
 
-We believe that an important driver of crime rate is the financial wellfare of the people. The following equations can help us determine how the omitted variable bias would impact our density coefficient:
+We believe that an important driver of crime rate is the financial welfare of the people. The following equations can help us determine how the omitted variable bias would impact our density coefficient:
 
 $$ crmrte = \beta_0 + \beta_1*density + \beta_2*poverty\_rate + u$$
 $$ poverty\_rate = \alpha_0 + \alpha_1*density +u $$
@@ -583,12 +583,12 @@ $$ pct\_of\_2parents\_hh = \alpha_0 + \alpha_1*pctmin80 $$
 
 We do not have a concrete understanding of whether children from two parent households are less likely to commit crime than children in single-parent households and orphans. Our subjective assumption is that it might be easier for two parents to provide good care for a child. For example, with two providers, the child would be less likely to live in poverty as well as possibly have more quality time with at least one of the parents. Therefore, the larger the percentage of two-parent households in a county, the lower the crime rate may be ($\beta_2 < 0$). According to kidscount.org, the percentage of African American children in single-parent households is 3 times larger than the percentage of Caucasian children in single-parent households in the State of North Carolina in 2005. Extrapolating from this, we will assume that counties with higher `pctmin80` would have lower percentage of two-parent households ($\alpha1<0$). Therefore, the omitted variable bias is positive, which would scale the slope coefficient on `pctmin80` away from zero (more positive). Thus, the marginal effect and statistical significance of `pctmin80` on crime rate may also be overestimated by omitting the effect of two-parent households in the model.
 
-**Potential Omitted Variable #4**: Percentage of Highschool Graduates
+**Potential Omitted Variable #4**: Percentage of High school Graduates
 
 $$ crmrte = \beta_0 + \beta_1*pctmin80 + \beta_2*pct\_hs\_graduates $$
 $$ pct\_hs\_graduates = \alpha_0 + \alpha_1*pctmin80 $$
 
-The average years of education in a county may also be an important factor that influences crime rate. We assume that more graduation from highschool would result in a higher chance of employment at a higher paying job. Furthermore, time spent in school at a young age is believed to keep children out of trouble and away from bad influences. Therefore, a county with a higher percentage of highschool graduates may possibly have a lower crime rate ($\beta_2<0$). According to governing.com, the North Carolina highschool graduation rate of African Americans is 10% lower than the highschool graduation rate of Caucasians in 2011. By extrapolating this information, we assume that counties with higher percentage of minorities will have a lower percentage of highschool graduates ($\alpha_1<0$). This means that the omitted variable bias is positive, which would scale the slope coefficient on `pctmin80` away from zero (more positive). Thus, the marginal effect and statistical significance of `pctmin80` on crime rate may also be overestimated by omitting the effect of education in the model.
+The average years of education in a county may also be an important factor that influences crime rate. We assume that more graduation from high school would result in a higher chance of employment at a higher paying job. Furthermore, time spent in school at a young age is believed to keep children out of trouble and away from bad influences. Therefore, a county with a higher percentage of high school graduates may possibly have a lower crime rate ($\beta_2<0$). According to governing.com, the North Carolina high school graduation rate of African Americans is 10% lower than the high school graduation rate of Caucasians in 2011. By extrapolating this information, we assume that counties with higher percentage of minorities will have a lower percentage of high school graduates ($\alpha_1<0$). This means that the omitted variable bias is positive, which would scale the slope coefficient on `pctmin80` away from zero (more positive). Thus, the marginal effect and statistical significance of `pctmin80` on crime rate may also be overestimated by omitting the effect of education in the model.
 
 **Potential Omitted Variable #5**: Rate of Drug Abuse
 
@@ -603,7 +603,7 @@ Something that strongly stands out in all of these omitted variables is that the
 
 The best model for crime rate included the probability of arrest, population density, police per capita, percent minority population, and percent young males.  All of these variables, except for police per capita, had statistically significant influence on the crime rate.
 
-Police per capita showed a positive correlation with crime rate, which seems counterintuitive.  We believe this is an artifact of counties with higher crime rates hiring more police officers to combat crime.  Therefore, a policy of "more cops on the street" may not be very effective.  Higher probability of arrest, however, correlates to a lower crime rate.  If would-be criminals feel they are more likely to be arrested, they are less likely to commit crimes.  Therefore, the campaign may want to pursue a policy of strict enforcement of the law by police officers.
+Police per capita showed a positive correlation with crime rate, which seems counter-intuitive.  We believe this is an artifact of counties with higher crime rates hiring more police officers to combat crime.  Therefore, a policy of "more cops on the street" may not be very effective.  Higher probability of arrest, however, correlates to a lower crime rate.  If would-be criminals feel they are more likely to be arrested, they are less likely to commit crimes.  Therefore, the campaign may want to pursue a policy of strict enforcement of the law by police officers.
 
-The other variables (density, percent young male, and percent minority population), however, cannot be directly affected by a policy, but these variables are affected by the ommited variables discussed earlier, which gives us ideas as to where to focus our efforts. For example, we may want to create a job training and placement program in dense areas with high percentage of minority population, in an effort to decrease unemployment and poverty, which should in turn lead to a reduction in the crime rate. Additionally, we may want to implement mentorship programs in areas with high percentage of minorities where young males may lack positive role models or have low high school graduation rate. Lastly, we may want to pursue an anti-drug campaign to reduce crime.
+The other variables (density, percent young male, and percent minority population), however, cannot be directly affected by a policy, but these variables are affected by the committed variables discussed earlier, which gives us ideas as to where to focus our efforts. For example, we may want to create a job training and placement program in dense areas with high percentage of minority population, in an effort to decrease unemployment and poverty, which should in turn lead to a reduction in the crime rate. Additionally, we may want to implement mentorship programs in areas with high percentage of minorities where young males may lack positive role models or have low high school graduation rate. Lastly, we may want to pursue an anti-drug campaign to reduce crime.
 
