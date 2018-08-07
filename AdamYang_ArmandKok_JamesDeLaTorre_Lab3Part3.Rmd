@@ -217,7 +217,7 @@ abline(lm(density~wfir, data = crime_df), col="red")
 
 # 4.0 Regression Models: Base Model
 
-The initial model created contains only those variables directly related to the candidate's positions on being pro-police, for strict enforcement, and concern with inner city and minority communities. Therefore, the variables we have chosen to represent these positions are: probability of arrest (prbarr), density, police per capita (polpc), and the percentage of minorities (pctmin80). 
+The initial model created contains only those variables directly related to the candidate's positions on being pro-police, for strict enforcement, and concern with inner city and minority communities. Therefore, the variables we have chosen to represent these positions are: probability of arrest (`prbarr`), `density`, police per capita (`polpc`), and the percentage of minorities (`pctmin80`). 
 
 ```{R}
 # Creating initial model
@@ -262,7 +262,7 @@ hist(model1$residuals, breaks=20)
 ```
 
 
-Based on our review of the six CLM assumptions, this is a valid linear model. We replaced the regular standard errors with the heteroscedasticity-robust standard errors. The resulting coefficients and parameters of the model are shown below:
+Based on our review of the six CLM assumptions, model 1 is an unbiased estimator. We replaced the regular standard errors with the heteroscedasticity-robust standard errors. The resulting coefficients and parameters of the model are shown below:
 
 ```{R}
 linearHypothesis(model1, c("prbarr = 0", " density = 0", "polpc = 0", "pctmin80 = 0"), vcov = vcovHC)
@@ -270,14 +270,14 @@ linearHypothesis(model1, c("prbarr = 0", " density = 0", "polpc = 0", "pctmin80 
 paste("adj.r.square:", summary(model1)$adj.r.squared)
 ```
 
-The adjusted r-squared of the model is relatively high at 0.66. This means that 66% of the variation in crime rate is explained by our input variables. In addition, the omnibus test reveals that the model is statistically significant, indicating that the model has some predictive power.
+The adjusted r-squared of the model is relatively high at 0.65. This means that 66% of the variation in crime rate is explained by our input variables. In addition, the omnibus test reveals that the model is statistically significant, indicating that the model has some predictive power.
 
 ```{R}
 coeftest(model1, vcovHC)
-
+coeftest(model2, vcovHC)
 ```
 
-Furthermore, the results of our initial model shows that the probability of arrest is statistically significant as a modulator of crime, while the density and minority percentage of each county are strongly statistically significant. The police per capita, on the other hand, is not. The slope coefficients tell us that for every 1 unit increase in `prbarr`, there is a corresponding 0.046 decrease in the crime rate. The model also suggests that by increasing the density of a county by 1 person per square mile, crime commited per person may rise by 0.008. Finally, for every percentage point increase of minorities in a county, crime commited per person may rise by 0.0003. The model also suggests that by increasing the police per capita by 1 will result in 5 additional crimes commited per person. However, this slope coefficeint is shown to be statistically insignificant.
+Furthermore, the results of our initial model shows that the probability of arrest is statistically significant as a modulator of crime, while the density and minority percentage of each county are strongly statistically significant. The police per capita, on the other hand, is not. The slope coefficients tell us that for every 1 percentage point increase in `prbarr`, there is a corresponding 0.00046 decrease in crimes per person. The model also suggests that by increasing the density of a county by 1 person per square mile, crime commited per person may rise by 0.0074. Finally, for every percentage point increase of minorities in a county, crime commited per person may rise by 0.0003. The model also suggests that by increasing the police per capita by 1 will result in 5 additional crimes commited per person. However, this slope coefficient is shown to be statistically insignificant.
 
 To further assess the strength of our model, we can take a look at the residuals vs. leverage plot shown below. Here we can see that data point 51, has a Cook's distance greater than 1, meaning it has high influence over the model. As shown in section 2.3 this data point has `polpc` and `prbarr` values multiple times higher than the next highest values for these variables. If this data point is not representative of the general population in North Carolina, then it may hurt the accuracy of our model. However, we investigated the other values of this county and could not justify removing this data point without further information.
 
