@@ -15,8 +15,6 @@ knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60),tidy=TRUE)
 #opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
 ```
 
-
-
 # Introduction
 
 Our team has been hired by a local political campaign to provide research on North Carolina crime statistics and to generate policy suggestions for reducing crime. Our candidate seeks to portray herself as being “pro-cop” and “tough on crime”, and she espouses strong policing and enforcement.  She also has a strong desire to understand the situations faced by the minority population within the state, and has expressed a keen interest in understanding how minority communities are impacted by crime.
@@ -50,7 +48,7 @@ The data provided is a sample from 91 counties in North Carolina, containing inf
 |**central**|=1 if in central N.C.   |      |**mix**|offense mix: face-to-face/other|
 |**pctymle**|percent young male|
 
-**\*** *These are not true probabilities that are limited between 0 and 1, but are ratios instead. `probarr` is the ratio of arrests to offenses, `probconv` is the ratio of convictions to arrests, and `prbpris` is the ratio of convictions resulting in an prison sentence to total convictions. Therefore, some of these values can be greater than 1. For example, the offender can be convicted of multiple crimes after his arrest.*
+**\*** *These are not true probabilities that are limited between 0 and 1, but are ratios instead. `prbarr` is the ratio of arrests to offenses, `probconv` is the ratio of convictions to arrests, and `prbpris` is the ratio of convictions resulting in an prison sentence to total convictions. Therefore, some of these values can be greater than 1. For example, the offender can be convicted of multiple crimes after his arrest.*
 
 
 ## 2.1 Loading the Data
@@ -129,42 +127,28 @@ boxplot(crime_df$taxpc, main = 'Boxplot of taxpc')
 
 # 3.0 Model Building Process
 
-It is important to examine our outcome variable, `crmrte` before building any models.
+Before building a linear regression, it is important to first examine our dependent variable, `crmrte`.
 
 ```{R}
 hist(crime_df$crmrte, main="Histogram of crmrte", breaks=30)
 ```
 
-The histogram of `crmrte` shows some positive skew, but there are no extreme outliers.
+The histogram above reveals a positive skew to `crmrte`, but there are no extreme outliers. Taking the natural log of this variable may remove the skewness but we did not find it to be a necessary step. More importantly, we wanted to keep the interpretation of this dependent variable simple so no natural log was taken.
 
 Given that our candidate is considering policies involving increasing the size of the police force, instituting stricter arrest protocols, and addressing issues of minorities in densely populated areas, the police per capita (`polpc`), probability of arrest, (`prbarr`), population per square mile (`density`), and percent minority (`pctmin80`) variables will be examined more closely.  Histograms of these variables are shown below.
 
 ```{R}
-hist(crime_df$polpc, main="Histogram of polpc", breaks=20)
+m <- rbind(c(1, 2), c(3, 4))
+layout(m)
+hist(crime_df$polpc, main="Histogram of polpc", breaks=50)
+hist(crime_df$prbarr, main="Histogram of prbarr", breaks=50)
+hist(crime_df$density, main="Histogram of density", breaks=50)
+hist(crime_df$pctmin80, main="Histogram of pctmin80", breaks=50)
 ```
 
-The histogram of `polpc` shows the point with an extreme value mentioned in section 2.3.
+The histogram of `polpc` shows the extreme value mentioned in section 2.3. Besides that point, this variable seems to resemble a normal distribution with some positive skew. The histogram of `prbarr` also shows a point with an extreme value, which is the same record that has an extreme value for `polpc`. Similar to `polpc`, `prbarr` also resembles a normal distribution with some positive skew. The histogram of `density`, however, seems to have a stronger positive skew than the other variables of interest. This might indicate that North Carolina is a state with fewer counties with large cities. The histogram of `pctmin` lies between 0 and 100 which is what we would expect to see. Furthermore, it is interesting that this variable is somewhat equally distributed between 0 and 60%.
 
-```{R}
-hist(crime_df$prbarr, main="Histogram of prbarr", breaks=20)
-```
-
-The histogram of `prbarr` also shows a point with an extreme value, which is the same record that has an extreme value for `polpc`.  
-
-```{R}
-hist(crime_df$density, main="Histogram of density", breaks=20)
-```
-
-Population density has a positive skew, which is likely due to the few counties with large cities.
-
-```{R}
-hist(crime_df$pctmin80, main="Histogram of pctmin80", breaks=20)
-```
-
-There are no extreme values in the histogram of `pctmin80`.
-
-
-With the exception of the one record that has extreme values for both `polpc` and `prbarr`, the key variables in our dataset that most closely relate to our candidate's policy interests appear to have distributions that can be used for modeling without the need for any transformations.  As we build models, we will watch for high influence from the record with extreme values (#51).
+With the exception of the one record that has extreme values for both `polpc` and `prbarr`, the key variables in our dataset that most closely relate to our candidate's policy interests appear to have distributions that can be used for modeling without any transformations.  As we build regression models with these variables, we will watch for high influence from the record with extreme values (#51).
 
 
 
@@ -174,46 +158,23 @@ To visualize the relationship between crime rate and our explanatory variables o
 
 
 ```{R}
-
 spm(~crmrte + polpc + prbarr + density + pctmin80, data=crime_df)
 ``` 
 
 
-The plots reveal that each of the selected explanatory variables shows a relationship with crime rate.  There is some degree of nonlinear relationship between `polpc` and `crmrte` and between `pctmin80` and `crmrte`.  However, transforming these variables would distort the practical interpretability of any model slope coefficients.  Therefore, the variables will not be transformed.
-
+The plots reveal that each of the selected explanatory variables shows a relationship with crime rate.  There is some degree of nonlinear relationship between `polpc` and `crmrte` and between `pctmin80` and `crmrte`.  However, transforming these variables would distort the practical interpretability of their slope coefficients.  Therefore, the variables will not be transformed.
 
 ## 3.2 Check for multicolinearity
 
-Since additional variables may be included in other models for crime rate, it is important to identify those explanatory variables with a high degree of colinearity.  Perfectly colinear variables are prohibited in OLS regression, so in the unlikely event that any such variables are found, only 1 from each perfectly colinear group will be kept.  Less-than-perfect colinearity can still be problematic, adding variance to a model, so if any highly colinear groups of variables are identified, only one variable from each group will be kept.  This analysis will narrow down the set of candidate variables for inclusion in any models we may choose to build.
+Since additional variables may be included in some of our models, it is important to identify those explanatory variables with a high degree of colinearity.  Perfectly multicolinear variables are prohibited in OLS regression, so in the unlikely event that any such variables are found, only 1 from each perfectly colinear group will be kept. Less-than-perfect colinearity can still be problematic, adding variance to a model, so if any highly colinear groups of variables are identified, we may decide to exclude one of the variables if we do not believe it is a strong influencer of crime rate.  This analysis will narrow down the set of candidate variables for inclusion in any models we may choose to build.
 
 To identify colinear variables, a correlation matrix was generated as shown below.
 
 ```{R}
-#TO DO - fix matrix sizing
-
-#correlation matrix for top 4 correlation and bottom 4 correlation
-cor_dr = cor(crime_df[c('prbarr',
-                        'prbpris',
-                        'prbconv',
-                        'avgsen',
-                        'polpc',
-                        'density',
-                        'taxpc',
-                        'west',
-                        'central',
-                        'urban',
-                        'pctmin80',
-                        'wcon',
-                        'wtuc',
-                        'wtrd',
-                        'wfir',
-                        'wser',
-                        'wmfg',
-                        'wfed',
-                        'wsta',
-                        'wloc',
-                        'mix',
-                        'pctymle')],
+# Correlation matrix 
+cor_dr = cor(crime_df[c('prbarr','prbpris','prbconv','avgsen','polpc','density',
+                        'taxpc','west','central','urban','pctmin80','wcon','wtuc',
+                        'wtrd','wfir','wser','wmfg','wfed','wsta','wloc','mix','pctymle')],
               use = "complete.obs")
 
 # Heatmap
@@ -221,38 +182,36 @@ ggplot(data = melt(cor_dr, na.rm = TRUE),
        aes(Var2, Var1, fill = value))+
 theme_minimal()+ 
 geom_tile(color = 'white')+
-scale_fill_gradient2(low = 'blue',
-                     high = "orange",
-                     mid = 'white', 
-                     midpoint = 0,
-                     limit = c(-1,1),
-                     name= 'Correlation')+
-theme(axis.text.x = element_text(face='bold',
-                                 angle=90,
-                                 vjust = 1,
-                                 size =8,
-                                 hjust = 1),
-     axis.text.y = element_text(face='bold',
-                                size=8),
+scale_fill_gradient2(low = 'blue',high = "orange",mid = 'white', 
+                     midpoint = 0,limit = c(-1,1),name= 'Correlation')+
+theme(axis.text.x = element_text(face='bold',angle=90,vjust = 1,size =8,hjust = 1),
+     axis.text.y = element_text(face='bold',size=8),
      axis.title.x=element_blank(),
      axis.title.y=element_blank())
-
 ```
 
 After reviewing the correlation matrix in detail, there were 5 pairs of variables that have a somewhat strong correlation to each other (i.e. has correlation > 0.6), which are listed below:
 
-- `urban` (82% correlation with `density`.  Kept `density` because it is a continuous variable providing more information than the categorical `urban` variable)
-- `west` (-64% correlation with `pctmin80`.  Kept `pctmin80` because it is one of the main drivers of our policies.)
-- `wtrd`, `wfed`, `wfir` (each of these had correlations >60% with eachother and/or with `density` or other wage columns.  Kept `density` as it can act as a proxy for the greatest number of other variables.)
+- `urban` (82% correlation with `density`.  Kept `density` because it is a continuous variable providing similar, but more information than the categorical `urban` variable)
+- `west` (-64% correlation with `pctmin80`.  Kept `pctmin80` because it is one of the main drivers of our policies and we don't believe west would be a strong driver.)
+- `wtrd`, `wfed`, `wfir` (each of these had correlations >60% with eachother and/or with `density` or other wage columns. We kept `density` because it can act as a proxy for the greatest number of other variables.)
 
 Below are the scatterplots of the different correlated variables.
 
 ```{R}
+m <- rbind(c(1, 2,3), c(4, 5,0))
+layout(m)
+par(mar = c(3, 3, 3, 3))
 plot(crime_df$urban, crime_df$density, main = "density vs. urban")
+abline(lm(density~urban, data = crime_df), col="red")
 plot(crime_df$west, crime_df$pctmin80, main = "pctmin80 vs. west")
+abline(lm(pctmin80~west, data = crime_df), col="red")
 plot(crime_df$wtrd, crime_df$density, main = "density vs. wtrd")
+abline(lm(density~wtrd, data = crime_df), col="red")
 plot(crime_df$wfed, crime_df$density, main = "density vs. wfed")
+abline(lm(density~wfed, data = crime_df), col="red")
 plot(crime_df$wfir, crime_df$density, main = "density vs. wfir")
+abline(lm(density~wfir, data = crime_df), col="red")
 ```
 
 
