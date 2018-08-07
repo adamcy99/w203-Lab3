@@ -463,14 +463,14 @@ Here we are doing a detailed evaluation of our chosen model (model 2) against th
 
 **CLM 3. No perfect multicollinearity:** There is no need to explicitly check for perfect collinearity, because R would've reported a warning if this occurred.  Furthermore, the correlation matrix shown in section 3.2 also shows that there is no perfect collinearity.
 
-**CLM 4. Zero Conditional Mean:**  $E(u|x)=0$. For this model, the residuals vs. fitted values plot shown below reveals a relatively flat spline centered around zero for most of the fitted values. However, looking at the plot closely the zero conditional mean does not hold for the majority of the fitted values. This may be caused by biases introduced by the additional variables or non-linear relationship between the new variables and the output variable. We may need to consider investigating and removing the source of the bias.
+**CLM 4. Zero Conditional Mean:**  $E(u|x)=0$. For this model, the residuals vs. fitted values plot shown below reveals a slight negative slope in the range 0 to 0.04. This may be caused by biases introduced by the additional variables or non-linear relationship between the new variables and the output variable. We may need to consider investigating and removing the source of the bias.
 
 ```{R}
 # Residuals vs. Fitted Plot
 plot(model2, which=1)
 ```
 
-**CLM 5. Homoscedasticity:** In the residuals vs. fitted values plot shown in **CLM 4**, the data points seem to form a cone shape which suggests some heteroscedasticity. In the scale-location plot below, there seems to be a slight positive slope across the range of fitted values. Furthermore, the Breusch-Pagan test shown below has a p-value of 0.0004972 which indicates that the null hypothesis of homoscedasticity can be rejected. However, heteroscedastic-robust standard errors were used When evaluating the statistical significance with this model, so the heteroscedacity may not be an issue.
+**CLM 5. Homoscedasticity:** In the residuals vs. fitted values plot shown in **CLM 4**, the data points seem to form a cone shape which suggests some heteroscedasticity. In the scale-location plot below, there seems to be a slight positive slope across the range of fitted values. Furthermore, the Breusch-Pagan test shown below has a p-value of 0.0006734 which indicates that the null hypothesis of homoscedasticity can be rejected. However, heteroscedastic-robust standard errors were used when evaluating the statistical significance with this model, so the heteroscedacity of this model may not be an issue.
 
 ```{R}
 # Scale-Location Plot
@@ -480,7 +480,7 @@ plot(model2, which=3)
 bptest(model2)
 ```
 
-**CLM 6. Normality of errors:** In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. The standardized residuals show some deviation from the straight line at the high end of the distribution. This suggests some skew at the high end of our residuals. However, the Shapiro-Wilk test shown below has a p-value of 0.05755 which means we cannot reject the null hypothesis of the residuals having a normal distribution.
+**CLM 6. Normality of errors:** In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. The standardized residuals show some deviation from the straight line at the high end of the distribution. This suggests some skew at the high end of our residuals. However, the Shapiro-Wilk test shown below has a p-value of 0.09232 which means we cannot reject the null hypothesis of the residuals having a normal distribution.
 
 ```{R}
 # Q-Q plot of Standardized Residuals
