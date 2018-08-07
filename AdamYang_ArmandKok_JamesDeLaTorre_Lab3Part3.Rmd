@@ -19,14 +19,9 @@ knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60),tidy=TRUE)
 
 # Introduction
 
-**Is the introduction clear? Is the research question specific and well defined? Could the research question
-lead to an actionable policy reccomendation? Does it motivate the analysis? Note that we’re not necessarily
-expecting a long introduction. Even a single paragraph is probably enough for most reports.**
+Our team has been hired by a local political campaign to provide research on North Carolina crime statistics and to generate policy suggestions for reducing crime. Our candidate seeks to portray herself as being “pro-cop” and “tough on crime”, and she espouses strong policing and enforcement.  She also has a strong desire to understand the situations faced by the minority population within the state, and has expressed a keen interest in understanding how minority communities are impacted by crime.
 
-
-Our team has been hired by a local political campaign to provide research on North Carolina crime statistics and to generate policy suggestions for reducing crime. Our candidate seeks to portray herself as being “pro-cop” and “tough on crime”, and she espouses strong policing and enforcement.  She also has a strong desire to understand the situations faced by the minority population within the state, and she has expressed a keen interest in understanding how minority communities are impacted by crime.
-
-The crime statistics dataset provided for analysis is a subset of the data used by Cornwell and W. Trumball in their 1994 study. The dependent variable, of our study is the crimes commited per capita, given as `crmrate`, while there are 24 other variables in the dataset, each of which can be potential modulators of the crime rate. We aim to build a linear model that regresses `crmrate` on the key variables in the dataset. In particular, we are interested in examining the potential of the following policies in reducing crime rate:
+The crime statistics dataset provided for analysis is a subset of the data used by Cornwell and W. Trumball in their 1994 study. The dependent variable of our study is the crimes commited per capita, given as `crmrate`. There are 24 other variables in the dataset, each of which can be potential modulators of the crime rate. We aim to build a linear model that regresses `crmrate` on the key variables in the dataset. In particular, we are interested in examining the potential of the following policies in reducing crime rate:
 
   * Policy to increase the police per capita of a county
   * Policy to implement a more stringent arrest protocol
@@ -36,13 +31,6 @@ In addition, we aim to identify other factors that may influence crime and attem
 
 
 # 2.0 Data Loading and Cleaning
-
-TO DO: Look for any top-coding or bottom coding.
-TO DO: remove this instructiuon line
-**Did the team notice any anomalous values? Is there a sufficient justification for any data points that are
-removed? Did the report note any coding features that affect the meaning of variables (e.g. top-coding or
-bottom-coding)? Overall, does the report demonstrate a thorough understanding of the data?**
-
 
 The data provided is a sample from 91 counties in North Carolina, containing information from 1987.  The variables in the dataset and their meanings are shown below:
 
@@ -62,7 +50,7 @@ The data provided is a sample from 91 counties in North Carolina, containing inf
 |**central**|=1 if in central N.C.   |      |**mix**|offense mix: face-to-face/other|
 |**pctymle**|percent young male|
 
-**\*** *These are not true probabilities that are limited between 0 and 1, but are ratios instead. For example, `probconv` is the ratio of the number of convictions to the number of arrests, which can be larger than 1.*
+**\*** *These are not true probabilities that are limited between 0 and 1, but are ratios instead. `probarr` is the ratio of arrests to offenses, `probconv` is the ratio of convictions to arrests, and `prbpris` is the ratio of convictions resulting in an prison sentence to total convictions. Therefore, some of these values can be greater than 1. For example, the offender can be convicted of multiple crimes after his arrest.*
 
 
 ## 2.1 Loading the Data
@@ -75,17 +63,9 @@ The data file, `crime_v2.csv` was opened and found to contain 97 rows.
 library(car)
 library(reshape2)
 library(ggplot2)
-library(stargazer)
 library(sandwich)
+library(stargazer)
 library(lmtest)
-
-# TO DO: Eliminate these commented lines
-# Adam's dir
-#mydir <- "/Users/adamyang/Desktop/w203/Lab3/w203-Lab3/"
-# Armand's dir
-# mydir<-"C:/Users/ak021523/Documents/GitHub/mids-repos/W203/Homework/w203-Lab3/"
-#jim's directory
-#mydir<- "F:/users/jddel/Documents/DATA_SCIENCE_DEGREE_LAPTOP/W203_Stats/Lab_03/"
 
 # Set directory based on who is running code
 if(file.exists("/Users/adamyang/")){
@@ -102,19 +82,13 @@ crime_df = read.csv(paste0(mydir,'crime_v2.csv'))
 
 ## 2.2 Data Cleanup
 
-Immediate inspection of the data revealed a few data cleanup steps were required.
+Immediate inspection of the data revealed a few requirements for data cleanup.
 
 - The last 6 rows of the data set were blanks.  These empty records were deleted.
 - One row had values of 1 for both `west` and `central`, placing that county in two regions simultaneously.  It is unknown whether this is possible, but currently there has been no reason to delete this particular row so the data will be kept for now.
 - The `prbconv` variable, representing the "probability of conviction" was read in as a factor (a cateogorical variable) instead of a numeric variable.  This variable was converted to numeric.
 
 ```{R}
-
-# Summary was performed to understand data.  Will not include in report text, however.
-#summary(crime_df)
-#str(crime_df)
-
-
 # get rid of rows with missing values (this only kills the 6 blank rows)
 crime_df<-crime_df[complete.cases(crime_df),]
 
@@ -122,6 +96,16 @@ crime_df<-crime_df[complete.cases(crime_df),]
 crime_df$prbconv <- as.numeric(as.character(crime_df$prbconv))
 ```
 
+A summary was created for each of the variables and `probarr` and `probconv` stood out as having maximum values over 1. We believe this is valid because these variables are not true probabilities. Instead, they are proxied by the ratios of arrest:offenses and convictions:arrests, respectively. Therefore we decided not to omit these variables.
+
+The `density` variable also stood out as having an extremely low minimum value. Upon inspection, the county in row 79 is revealed to have a density of 0.0000203422 person per sq. mile. This translates to 1 person in 49,159 square miles. Given that North Carolina is only 53,819 square miles, we believe this is an invalid value. The rest of the variables for this county seemed to have valid values so only the `density` observation was replaced with an `NA`.
+
+```{R}
+summary(crime_df[,c('prbarr', 'prbconv', 'density')])
+crime_df$density[79] = NA
+```
+
+A historgram was plotted for each of the variables and no evidence of top or bottom coding was found. However, we did notice a few other strong outliers that will be discussed in the next section.
 
 ## 2.3 Extreme Value Identification
 
@@ -130,29 +114,20 @@ After generating histograms to review the distributions of the different variabl
 - polpc - row 51
 - prbarr - row 51
 - wser - row 84
-- taxpc row 25
+- taxpc - row 25
 
-After reviewing further, there was no reason for the extremely skewed data points to be removed from the data set. boxplots of the variables above are shown below.
+The boxplots shown below will give a sense of how far these points are from the IQR. However, upon further review, our team could not come up with concrete reasons to why these observations are invalid. Therefore, we can not justify omitting these data points.
 
 ```{R}
-
+m <- rbind(c(1, 2), c(3, 4))
+layout(m)
 boxplot(crime_df$polpc, main ='Boxplot of polpc')
 boxplot(crime_df$prbarr, main ='Boxplot of prbarr')
 boxplot(crime_df$wser, main = 'Boxplot of wser')
 boxplot(crime_df$taxpc, main = 'Boxplot of taxpc')
-
 ```
 
-
-
 # 3.0 Model Building Process
-
-TO DO: remove this instruction text
-
-
-*Overall, is each step in the model building process supported by EDA? Is the outcome variable (or variables) appropriate? Is there a thorough univariate analysis of the outcome variable. Did the team identify at least two key explanatory variables and perform a thorough univariate analysis of each? Did the team clearly state why they chose these explanatory variables, does this explanation make sense in term of their research question? Did the team consider available variable transformations and select them with an eye towards model plausibility and interperability? Are transformations used to expose linear relationships in scatterplots? Is there enough explanation in the text to understand the meaning of each visualization?*
-
-
 
 It is important to examine our outcome variable, `crmrte` before building any models.
 
