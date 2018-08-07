@@ -3,8 +3,8 @@ title: "W203 Lab 3"
 author: "Armand Kok, Adam Yang, James De La Torre"
 output:
   pdf_document:
-    fig_height: 3
-    fig_width: 4.5
+    fig_height: 4
+    fig_width: 6
   html_document:
     df_print: paged
   'pdf_document:': default
