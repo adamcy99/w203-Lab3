@@ -30,7 +30,7 @@ In addition, we aim to identify other factors that may influence crime and attem
 
 # 2.0 Data Loading and Cleaning
 
-The data provided is a sample from 91 counties in North Carolina, containing information from 1987.  The variables in the dataset and their meanings are shown below:
+The dataset provided is a sample from 91 counties in North Carolina, containing information from 1987.  The variables in the dataset and their meanings are shown below:
 
 |**Variable**|**Label**|      |**Variable**|**Label**|
 |-------|----|----|------|--------|
@@ -94,7 +94,7 @@ crime_df<-crime_df[complete.cases(crime_df),]
 crime_df$prbconv <- as.numeric(as.character(crime_df$prbconv))
 ```
 
-A summary was created for each of the variables and `prbarr` and `prbconv` stood out as having maximum values over 1. We believe this is valid because these variables are not true probabilities. Instead, they are proxied by the ratios of arrest:offenses and convictions:arrests, respectively. Therefore we decided not to omit these variables.
+A summary was created for each of the variables, and `prbarr` and `prbconv` stood out as having maximum values over 1. We believe this is valid because these variables are not true probabilities. Instead, they are proxied by the ratios of arrests to offenses and convictions to arrests, respectively. Therefore, we decided not to omit these variables.
 
 The `density` variable also stood out as having an extremely low minimum value. Upon inspection, the county in row 79 is revealed to have a density of 0.0000203422 person per sq. mile. This translates to 1 person in 49,159 square miles. Given that North Carolina is only 53,819 square miles, we believe this is an invalid value. The rest of the variables for this county seemed to have valid values so only the `density` observation was replaced with an `NA`.
 
@@ -108,6 +108,7 @@ A historgram was plotted for each of the variables and no evidence of top or bot
 ## 2.3 Extreme Value Identification
 
 After generating histograms to review the distributions of the different variables, four were found to have extremely skewed data points:
+
 
 - polpc - row 51
 - prbarr - row 51
@@ -402,7 +403,7 @@ se.model2 <- sqrt(diag(vcovHC(model2)))
 se.model3 <- sqrt(diag(vcovHC(model3)))
 
 #stargazer with all 3 models
-stargazer(model1, model2, model3, title = "Regression Models", type = "latex", report = "vcsp", omit.stat = "f", se = list(se.model1, se.model2, se.model3), star.cutoffs = c(0.05,0.01,0.001))
+stargazer(model1, model2, model3, title = "Regression Models", type = "latex", report = "vcp", omit.stat = "f", se = list(se.model1, se.model2, se.model3), star.cutoffs = c(0.05,0.01,0.001))
 
 ```
 
@@ -539,7 +540,6 @@ se.model4 <- sqrt(diag(vcovHC(model4)))
 
 #stargazer with all 3 models
 stargazer(model2, model4, title = "Regression Models", type = "latex", report = "vcsp", omit.stat = "f", se = list(se.model2, se.model4), star.cutoffs = c(0.05,0.01,0.001))
-
 ```
 
 # 5.0 Omitted Variables Discussion
