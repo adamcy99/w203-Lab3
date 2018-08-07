@@ -501,29 +501,6 @@ After reviewing the 6 CLM assumptions, the zero-conditional mean assumption was 
 
 ```{R}
 model4 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + pctymle, data = crime_df)
-
-waldtest(model1, model4, vcov = vcovHC)
-
-plot(model4)
-
-crime_df[crime_df$prb_conv > 0.65,]
-
-crime_df$prb_conv>0.65
-
-boxplot(crime_df$prbconv)
-
-
-
-
-plot(crime_df$prbconv, crime_df$crmrte)
-plot(crime_df$prbarr, crime_df$crmrte)
-
-
-
-crime_df[51,]
-
-summary(crime_df$prbconv)
-
 ```
 
 Upon inspection of the residual vs fitted plot below , it appears that model 4 does not violate the zero conditional mean assumption. 
