@@ -403,7 +403,7 @@ se.model2 <- sqrt(diag(vcovHC(model2)))
 se.model3 <- sqrt(diag(vcovHC(model3)))
 
 #stargazer with all 3 models
-stargazer(model1, model2, model3, title = "Regression Models", type = "latex", report = "vcp", omit.stat = "f", se = list(se.model1, se.model2, se.model3), star.cutoffs = c(0.05,0.01,0.001))
+stargazer(model1, model2, model3, title = "Regression Models", type = "latex", report = "vcp", omit.stat = "f", se = list(se.model1, se.model2, se.model3), star.cutoffs = c(0.05,0.01,0.001), font.size = "small")
 
 ```
 
@@ -538,7 +538,7 @@ Below is the final heteroscedastic robust coefficient test, and the significant 
 se.model2 <- sqrt(diag(vcovHC(model2)))
 se.model4 <- sqrt(diag(vcovHC(model4)))
 
-#stargazer with all 3 models
+#stargazer with model 2 and model 4
 stargazer(model2, model4, title = "Regression Models", type = "latex", report = "vcsp", omit.stat = "f", se = list(se.model2, se.model4), star.cutoffs = c(0.05,0.01,0.001))
 ```
 
