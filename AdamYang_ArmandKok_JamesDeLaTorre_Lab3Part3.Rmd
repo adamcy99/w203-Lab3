@@ -120,6 +120,7 @@ The boxplots shown below will give a sense of how far these points are from the 
 ```{R}
 m <- rbind(c(1, 2), c(3, 4))
 layout(m)
+par(mar = c(3, 3, 3, 3))
 boxplot(crime_df$polpc, main ='Boxplot of polpc')
 boxplot(crime_df$prbarr, main ='Boxplot of prbarr')
 boxplot(crime_df$wser, main = 'Boxplot of wser')
@@ -141,6 +142,7 @@ Given that our candidate is considering policies involving increasing the size o
 ```{R}
 m <- rbind(c(1, 2), c(3, 4))
 layout(m)
+par(mar = c(3, 3, 3, 3))
 hist(crime_df$polpc, main="Histogram of polpc", breaks=50)
 hist(crime_df$prbarr, main="Histogram of prbarr", breaks=50)
 hist(crime_df$density, main="Histogram of density", breaks=50)
@@ -403,7 +405,7 @@ se.model2 <- sqrt(diag(vcovHC(model2)))
 se.model3 <- sqrt(diag(vcovHC(model3)))
 
 #stargazer with all 3 models
-stargazer(model1, model2, model3, title = "Regression Models", type = "latex", report = "vcp", omit.stat = "f", se = list(se.model1, se.model2, se.model3), star.cutoffs = c(0.05,0.01,0.001), font.size = "small")
+stargazer(model1, model2, model3, title = "Regression Models", type = "latex", report = "vcp", omit.stat = "f", se = list(se.model1, se.model2, se.model3), star.cutoffs = c(0.05,0.01,0.001), font.size = "footnotesize", column.sep.width = "1pt")
 
 ```
 
@@ -539,7 +541,7 @@ se.model2 <- sqrt(diag(vcovHC(model2)))
 se.model4 <- sqrt(diag(vcovHC(model4)))
 
 #stargazer with model 2 and model 4
-stargazer(model2, model4, title = "Regression Models", type = "latex", report = "vcsp", omit.stat = "f", se = list(se.model2, se.model4), star.cutoffs = c(0.05,0.01,0.001))
+stargazer(model2, model4, title = "Regression Models", type = "latex", report = "vcsp", omit.stat = "f", se = list(se.model2, se.model4), star.cutoffs = c(0.05,0.01,0.001), font.size = "footnotesize", column.sep.width = "1pt")
 ```
 
 # 5.0 Omitted Variables Discussion
