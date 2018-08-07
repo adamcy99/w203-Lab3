@@ -382,8 +382,7 @@ Compared to model 2, the adjusted R-squared is only marginally higher, which sug
 
 What is interesting here is that `pctymle` variable is now considered significant, unlike in model 2. This may be due to the nuances that the additional variables bring for the `pctymle` variable. 
 
-**Other Analysis**
-The residuals vs. leverage plot shows that there are two data points (25 and 84), that have Cook's distance greater than 1, indicating that they highly influence the regression model. In looking at data point 84 further, there are several things that stand out: it has the highest `wser`, `prbconv`, and `pctmin80`. On the other hand point 25, highest `taxpc`. However, we investigated the other values of this county and could not justify removing this data point without further information. 
+The residuals vs. leverage plot shows that there are two data points (25 and 84), that have Cook's distance greater than 1, indicating that they highly influence the regression model. In looking at data point 84 further, there are several things that stand out: it has the highest `wser`, `prbconv`, and `pctmin80`. On the other hand, point 25 has the highest `taxpc`. However, we investigated the other values of this county and could not justify removing this data point without further information. 
 
 Furthermore, in the residual vs. leverage plot below, we see that compared to model 2, we now have more data points have standardized residuals over 2. Therefore, compared to model 2, model 3 does not provide a better representation of the data.
 
