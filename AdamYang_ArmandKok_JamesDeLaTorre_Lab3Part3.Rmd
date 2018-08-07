@@ -498,19 +498,19 @@ hist(model2$residuals)
 Based on our review of the six CLM assumptions, model 2 may not be considered an unbiased estimator, especially since it violates the zero conditional mean. To draw inferences on the coefficients, we replaced the regular standard errors with the heteroscedasticity-robust standard errors. 
 
 **Adjusting Model Specifications**
-After reviewing the 6 CLM assumptions, the zero-conditional mean assumption was violated, upon investigation, we found that the addition of `prbconv` introduced some bias when `prbarr` is also included in the regression model. So to improve the model and meet the zero-conditional mean assumption, we decided to remove `prbconv` from the regression model, and created model 4 below
+After reviewing the 6 CLM assumptions, the zero-conditional mean assumption was violated, upon investigation, we found that the addition of `prbconv` introduced some bias when `prbarr` is also included in the regression model. Perhaps this is because these two variables have somewhat inverse relationships with each other. To improve the model and meet the zero-conditional mean assumption, we decided to remove `prbconv` from the regression model, and created model 4 below
 
 ```{R}
 model4 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + pctymle, data = crime_df)
 ```
 
-Upon inspection of the residual vs fitted plot below , it appears that model 4 does not violate the zero conditional mean assumption. 
+Upon inspection of the residual vs fitted plot below , it appears that model 4 does no longer violates the zero conditional mean assumption. 
 
 ```{r}
 plot(model4, which = 1)
 ```
 
-However, as a tradeoff, model 4's Normal Q-Q plot shows that our residuals have lost normality. We confirmed this by comparing the shapiro test of our two models. As shown below, the p-value of model 4 is 4.755e-05, which means we can reject the null hypothesis of normal error distribution, while the p-value for model 2 is 0.05755, which means we cannot reject the null hypothesis. However, since we have a sample size of 91 we can invoke the CLT to rely on the asymptotic properties of OLS.
+However, as a tradeoff, model 4's Normal Q-Q plot shows that our residuals have lost normality. We confirmed this by comparing the shapiro test of our two models. As shown below, the p-value of model 4 is 6.399e-05, which means we can reject the null hypothesis of normal error distribution, while the p-value for model 2 is 0.09232, which means we cannot reject the null hypothesis. However, since we have a sample size of 91 we can invoke the CLT to rely on the asymptotic properties of OLS. Therefore, we believe this trade-off may be worth improving the zero conditional mean assumption.
 
 ```{R}
 plot(model4, which = 2)
@@ -518,27 +518,27 @@ shapiro.test(model4$residuals)
 shapiro.test(model2$residuals)
 ```
 
-Also, another trade off is that we now have a highly influential data point (point #51), as we can see below in the Residuals vs. Leverage plot. Lastly, we also increased the number of standardized residuals that are greater than 2, indicating that model 4 is not as good of a represantation of the data set compared to model 2.
+Another trade off is that we now have a highly influential data point (point #51), as we can see below in the Residuals vs. Leverage plot. We also increased the number of standardized residuals that are greater than 2, indicating that model 4 is not as good of a represantation of the data set compared to model 2.
 
 ```{R}
 plot(model4, which = 5)
 ```
 
-Despite the tradeoffs mentioned above, we think it is more important to meet the zero-conditional mean assumption, since that is the strictest assumption among the 6 in CLM that we need to meet in order to get a unbiased estimator.
+Despite the tradeoffs mentioned above, we think it is more important to meet the zero-conditional mean assumption, since it is the strictest among the 6 CLM assumptions that we need to meet in order to get a unbiased estimator.
 
 Below is the final heteroscedastic robust coefficient test, and the significant coefficients can be interpreted as follows:
 - For every percentage point increase in increase in probability arrest, crime rate decreases by 0.0004.
 - For every 1 additional person per square mile, crime increases by .007 crimes per person.
 - For every percentage point increase in minority population, crime increases by .0003 crimes per person.
-- For every percentage point increase in young male population, crime increases by 0.00129 crimes per person.
+- For every percentage point increase in young male population, crime increases by 0.00128 crimes per person.
 
-```{R}
+```{R, results = 'asis'}
 # Replace regular Standard Errors with the heteroscedasticity-robust Standard Errors
 se.model2 <- sqrt(diag(vcovHC(model2)))
 se.model4 <- sqrt(diag(vcovHC(model4)))
 
 #stargazer with all 3 models
-stargazer(model2, model4, title = "Regression Models", type = "text", report = "vcsp", omit.stat = "f", se = list(se.model2, se.model4), star.cutoffs = c(0.05,0.01,0.001))
+stargazer(model2, model4, title = "Regression Models", type = "latex", report = "vcsp", omit.stat = "f", se = list(se.model2, se.model4), star.cutoffs = c(0.05,0.01,0.001))
 
 ```
 
