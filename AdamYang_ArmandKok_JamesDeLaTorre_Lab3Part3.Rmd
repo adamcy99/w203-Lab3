@@ -132,7 +132,9 @@ boxplot(crime_df$taxpc, main = 'Boxplot of taxpc')
 Before building a linear regression, it is important to first examine our dependent variable, `crmrte`.
 
 ```{R}
-hist(crime_df$crmrte, main="Histogram of crmrte", breaks=30)
+par(mar=c(2.1,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+hist(crime_df$crmrte, main="Histogram of crmrte", breaks=30, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 ```
 
 The histogram above reveals a positive skew to `crmrte`, but there are no extreme outliers. Taking the natural log of this variable may remove the skewness but we did not find it to be a necessary step. More importantly, we wanted to keep the interpretation of this dependent variable simple so no natural log was taken.
@@ -232,36 +234,40 @@ After creating the model, we evaluated it against the six Classical Linear Model
 For this model, the residuals vs. fitted values plot shown below reveals a relatively flat spline centered around zero. Therefore, there does not seem to be a clear deviation from the zero conditional mean and the assumption holds. We decided to include this plot so it can be compared with the residuals vs. fitted plot of our other regression models.
 
 ```{R}
-# Residuals vs. Fitted Plot
-plot(model1, which=1)
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model1, which=1, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 ```
 
 In the residuals vs. fitted values plot shown above, the data points seem to form a cone shape which suggests some heteroscedasticity. In the scale-location plot below, there seems to be a slight positive slope across the range of fitted values between 0.02 and 0.04. 
 
 ```{R}
-# Scale-Location Plot
-plot(model1, which=3)
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model1, which=3, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 ```
 
 Furthermore, the Breusch-Pagan test shown below has a p-value of 4.866e-05 which indicates that the null hypothesis of homoscedasticity can be rejected. Because of this, heteroscedastic-robust standard errors will be used when evaluating the statistical significance of calculated model coefficients
 
 ```{R}
-# Breusch-Pagan
 bptest(model1)
 ```
 
 In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. However, the standardized residuals show some deviation from the straight line at the extreme ends of the distribution. This suggests that our residuals are skewed at the extreme ends. Furthermore, the Shapiro test shown below has a p-value of 0.0002 which means we can reject the null hypothesis of the residuals having a normal distribution.
 
 ```{R}
-# Q-Q plot of Standardized Residuals
-plot(model1, which=2)
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model1, which=2, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 shapiro.test(model1$residuals)
 ```
 
 To further verify this observation, a histogram of this model's residuals is shown below. The histogram shows approximate normality near the center of the distribution, but also some evidence of skewness; especially on the positive end. However, the Central Limit Theorem (CLT) claims that if the sample size is large enough, we can assume that the residuals have a normal sampling distribution. For distributions with a very strong skew, a much larger sample size may be required, but for minor skews as in this case, the rule of thumb is that the CLT can be applied when the sample size is greater than 30. The sample size used for this model is 91 which should be enough for the CLT to hold.
 
 ```{R}
-hist(model1$residuals, breaks=20)
+par(mar=c(2.1,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+hist(model1$residuals, breaks=20, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 ```
 
 
@@ -296,20 +302,23 @@ plot(model1, which=5)
 A second model was created which included the four original explanatory variables (probability of arrest, `prbarr`; population per square mile, `density`; and police per capita, `polpc`) plus two additional variables--the "probability" of conviction, `prbconv` and percentage of a county's population comprised of young males `pctymle`.  The probability of conviction was selected based on the thought that if someone believes he is more likely to be convicted of a crime, he may be less inclined to take the risk of committing the crime. The percent young males variable was included because we believe that young males are responsible for a disproportionally large share of total crimes committed. Including these variables should improve the accuracy of our inferences for crime rate.
 
 ```{R}
-# Creating Model 2
 model2 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + prbconv + pctymle, data = crime_df)
 ```
 
 This second model produced some unexpected results with respect to the linear model assumptions.  First, the residuals show more deviation from the zero conditional mean assumption than our previous model exhibited. The residuals vs. fitted values plot below shows a negative slope for fitted values in the range of 0 and 0.04. Perhaps one of the models we added is introducing some sort of bias to our model.
 
 ```{R}
-plot(model2, which=1, caption="", main="Residuals vs Fitted (Model 2)")
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model2, which=1, caption="", main="Residuals vs Fitted (Model 2)", cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 ```
 
 Judging from the Scale-Location plot below, model 2 still exhibits heteroscedasticity, albeit slighthly less so than model 1. Furthermore, the Breusch-Pagan test has a p-value of 0.0007, which reaffirms the findings of heteroscedasticity from the Scale-Location plot. Using heteroscedastic-robust standard errors when evaluating the model coefficients should prevent this from being a problem.
 
 ```{R}
-plot(model2, which=3, caption="", main="Scale-Location (Model 2)")
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model2, which=3, caption="", main="Scale-Location (Model 2)", cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 bptest(model2)
 ```
 
@@ -331,7 +340,9 @@ In the second model, the significant slope coefficients can be interpreted as fo
 
 
 ```{R}
-plot(model2, which = 5)
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model2, which = 5, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 ```
 
 Judging from the Residuals vs. Leverage plot above, point 51 no longer has Cook's distance greater than 1 like it did in model 1. This indicates that point 51 is not influential on the new regression model and is due to the additional information that the new variables bring to the model.
@@ -350,27 +361,23 @@ Upon inspection, model 3 meets most of the CLM assumptions. However, there are e
 The Scale-Location plot below reveals a spline that is somewhat horizontal. It is hard to claim homoscedasticity however, so the Breusch-Pagan test was conducted. The Breusch-Pagan test has a p-value greater than 0.05, meaning we cannot reject the null hypothesis of homoscedasticity. Despite these findings, our team decided to be more conservative, so heteroscedastic-robust standard errors will be used to perform any sort of statistical test for the model.
 
 ```{R}
-#scale location plot
-plot(model3, which=3)
-
-#breusch-pagan test
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model3, which=3, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 bptest(model3)
 ```
 
 In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line except for a few points at the right most end of the line. Unlike the previous two models, the standard residuals of model 3 seem to have a fairly normal distribution. To confirm this, the Shapiro test was conducted, which gave us a p-value of 0.5711 which means we no longer reject the null hypothesis of the residuals having a normal distribution. 
 
 ```{R}
-# Q-Q plot of Standardized Residuals
-plot(model3, which=2)
-
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model3, which=2, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 shapiro.test(model3$residuals)
 ```
 
 ```{R}
-#print adj r squared
 paste("adj.r.square:", summary(model3)$adj.r.squared)
-
-#test coefficient significance
 coeftest(model3, vcov = vcovHC)
 ```
 
@@ -390,7 +397,9 @@ The residuals vs. leverage plot shows that there are two data points (25 and 84)
 Furthermore, in the residual vs. leverage plot below, we see that compared to model 2, we now have more data points have standardized residuals over 2. Therefore, compared to model 2, model 3 does not provide a better representation of the data.
 
 ```{R}
-plot(model3, which = 5)
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model3, which = 5, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 ```
 
 
@@ -453,7 +462,9 @@ shapiro.test(model2$residuals)
 Model 2 also has the best standardized residual vs. leverage plot, where it has the least amount of data points that have standardized residuals greater than 2. In addition, unlike model 1 and 3, model 2 does not have any data points that has a Cook's distance greater than 1 as it can be seen in the Residuals vs. Leverage plots below. This indicates that model 2 is not strongly influenced by any particular data point.
 
 ```{R}
-plot(model2, 5)
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model2, 5, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 ```
 
 **CLM Assumption Diagnostics**
@@ -469,25 +480,26 @@ Here we are doing a detailed evaluation of our chosen model (model 2) against th
 **CLM 4. Zero Conditional Mean:**  $E(u|x)=0$. For this model, the residuals vs. fitted values plot shown below reveals a slight negative slope in the range 0 to 0.04. This may be caused by biases introduced by the additional variables or non-linear relationship between the new variables and the output variable. We may need to consider investigating and removing the source of the bias.
 
 ```{R}
-# Residuals vs. Fitted Plot
-plot(model2, which=1)
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model2, which=1, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 ```
 
 **CLM 5. Homoscedasticity:** In the residuals vs. fitted values plot shown in **CLM 4**, the data points seem to form a cone shape which suggests some heteroscedasticity. In the scale-location plot below, there seems to be a slight positive slope across the range of fitted values. Furthermore, the Breusch-Pagan test shown below has a p-value of 0.0006734 which indicates that the null hypothesis of homoscedasticity can be rejected. However, heteroscedastic-robust standard errors were used when evaluating the statistical significance with this model, so the heteroscedacity of this model may not be an issue.
 
 ```{R}
-# Scale-Location Plot
-plot(model2, which=3)
-
-# Breusch-Pagan
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model2, which=3, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 bptest(model2)
 ```
 
 **CLM 6. Normality of errors:** In the Q-Q plot shown below, the bulk of the error terms seem to follow the straight line which suggests a fairly normal distribution. The standardized residuals show some deviation from the straight line at the high end of the distribution. This suggests some skew at the high end of our residuals. However, the Shapiro-Wilk test shown below has a p-value of 0.09232 which means we cannot reject the null hypothesis of the residuals having a normal distribution.
 
 ```{R}
-# Q-Q plot of Standardized Residuals
-plot(model2, which=2)
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model2, which=2, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 
 shapiro.test(model2$residuals)
 ```
@@ -495,7 +507,9 @@ shapiro.test(model2$residuals)
 To further verify this observation, a histogram of this model's residuals is shown below. The histogram shows approximate normality near the center of the distribution, but also some evidence of skewness on the positive end. However, the Central Limit Theorem (CLT) claims that if the sample size is large enough we can assume that the residuals have a normal sampling distribution. For distributions with a very strong skew, a much larger sample size may be required, but for minor skews as in this case, the rule of thumb is that the CLT can be applied when the sample size is greater than 30. The sample size used for this model is 91 which should be enough for the CLT to hold.
 
 ```{R}
-hist(model2$residuals)
+par(mar=c(2.1,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+hist(model2$residuals, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 ```
 
 Based on our review of the six CLM assumptions, model 2 may not be considered an unbiased estimator, especially since it violates the zero conditional mean. To draw inferences on the coefficients, we replaced the regular standard errors with the heteroscedasticity-robust standard errors. 
@@ -510,13 +524,17 @@ model4 <- lm(crmrte ~ prbarr + density + polpc + pctmin80 + pctymle, data = crim
 Upon inspection of the residual vs fitted plot below , it appears that model 4 does no longer violates the zero conditional mean assumption. 
 
 ```{r}
-plot(model4, which = 1)
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model4, which = 1, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 ```
 
 However, as a tradeoff, model 4's Normal Q-Q plot shows that our residuals have lost normality. We confirmed this by comparing the shapiro test of our two models. As shown below, the p-value of model 4 is 6.399e-05, which means we can reject the null hypothesis of normal error distribution, while the p-value for model 2 is 0.09232, which means we cannot reject the null hypothesis. However, since we have a sample size of 91 we can invoke the CLT to rely on the asymptotic properties of OLS. Therefore, we believe this trade-off may be worth improving the zero conditional mean assumption.
 
 ```{R}
-plot(model4, which = 2)
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model4, which = 2, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 shapiro.test(model4$residuals)
 shapiro.test(model2$residuals)
 ```
@@ -524,7 +542,9 @@ shapiro.test(model2$residuals)
 Another trade off is that we now have a highly influential data point (point #51), as we can see below in the Residuals vs. Leverage plot. We also increased the number of standardized residuals that are greater than 2, indicating that model 4 is not as good of a represantation of the data set compared to model 2.
 
 ```{R}
-plot(model4, which = 5)
+par(mar=c(3.9,4.1,1.1,1.1))
+options(repr.plot.width=4, repr.plot.height=4)
+plot(model4, which = 5, cex.lab=0.7, cex.axis=0.7, cex.main=0.7, cex.sub=0.7)
 ```
 
 Despite the tradeoffs mentioned above, we think it is more important to meet the zero-conditional mean assumption, since it is the strictest among the 6 CLM assumptions that we need to meet in order to get a unbiased estimator.
