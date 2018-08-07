@@ -48,7 +48,7 @@ The data provided is a sample from 91 counties in North Carolina, containing inf
 |**central**|=1 if in central N.C.   |      |**mix**|offense mix: face-to-face/other|
 |**pctymle**|percent young male|
 
-**\*** *These are not true probabilities that are limited between 0 and 1, but are ratios instead. `prbarr` is the ratio of arrests to offenses, `probconv` is the ratio of convictions to arrests, and `prbpris` is the ratio of convictions resulting in an prison sentence to total convictions. Therefore, some of these values can be greater than 1. For example, the offender can be convicted of multiple crimes after his arrest.*
+**\*** *These are not true probabilities that are limited between 0 and 1, but are ratios instead. `prbarr` is the ratio of arrests to offenses, `prbconv` is the ratio of convictions to arrests, and `prbpris` is the ratio of convictions resulting in an prison sentence to total convictions. Therefore, some of these values can be greater than 1. For example, the offender can be convicted of multiple crimes after his arrest.*
 
 
 ## 2.1 Loading the Data
@@ -94,7 +94,7 @@ crime_df<-crime_df[complete.cases(crime_df),]
 crime_df$prbconv <- as.numeric(as.character(crime_df$prbconv))
 ```
 
-A summary was created for each of the variables and `probarr` and `probconv` stood out as having maximum values over 1. We believe this is valid because these variables are not true probabilities. Instead, they are proxied by the ratios of arrest:offenses and convictions:arrests, respectively. Therefore we decided not to omit these variables.
+A summary was created for each of the variables and `prbarr` and `prbconv` stood out as having maximum values over 1. We believe this is valid because these variables are not true probabilities. Instead, they are proxied by the ratios of arrest:offenses and convictions:arrests, respectively. Therefore we decided not to omit these variables.
 
 The `density` variable also stood out as having an extremely low minimum value. Upon inspection, the county in row 79 is revealed to have a density of 0.0000203422 person per sq. mile. This translates to 1 person in 49,159 square miles. Given that North Carolina is only 53,819 square miles, we believe this is an invalid value. The rest of the variables for this county seemed to have valid values so only the `density` observation was replaced with an `NA`.
 
@@ -302,7 +302,7 @@ plot(model1, which=5)
 
 
 
-A second model was created which included the three original explanatory variables (probability of arrest, `prbarr`; population per square mile, `density`; and police per capita, `polpc`) plus two additional variables--the "probability" of conviction, `probconv` and percentage of a county's population comprised of young males `pctymle`.  The probability of conviction was selected based on the thought that if someone believes he is more likely to be convicted if he commits a crime, he may be less inclined to take the risk of committing a crime. The percent young males variable was included because we believe that young males are responsible for a disproportionally large share of total crimes committed. Including these variables should improve the accuracy of our inferences for crime rate.
+A second model was created which included the three original explanatory variables (probability of arrest, `prbarr`; population per square mile, `density`; and police per capita, `polpc`) plus two additional variables--the "probability" of conviction, `prbconv` and percentage of a county's population comprised of young males `pctymle`.  The probability of conviction was selected based on the thought that if someone believes he is more likely to be convicted if he commits a crime, he may be less inclined to take the risk of committing a crime. The percent young males variable was included because we believe that young males are responsible for a disproportionally large share of total crimes committed. Including these variables should improve the accuracy of our inferences for crime rate.
 
 
 ```{R}
