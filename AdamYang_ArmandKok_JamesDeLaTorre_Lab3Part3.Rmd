@@ -396,31 +396,28 @@ plot(model3, which = 5)
 
 The regression table below shows the summary of the three models that were created.
 
-```{R}
+```{R, results = 'asis'}
 # Replace regular Standard Errors with the heteroscedasticity-robust Standard Errors
 se.model1 <- sqrt(diag(vcovHC(model1)))
 se.model2 <- sqrt(diag(vcovHC(model2)))
 se.model3 <- sqrt(diag(vcovHC(model3)))
 
 #stargazer with all 3 models
-stargazer(model1, model2, model3, title = "Regression Models", type = "text", report = "vcsp", omit.stat = "f", se = list(se.model1, se.model2, se.model3), star.cutoffs = c(0.05,0.01,0.001))
+stargazer(model1, model2, model3, title = "Regression Models", type = "latex", report = "vcsp", omit.stat = "f", se = list(se.model1, se.model2, se.model3), star.cutoffs = c(0.05,0.01,0.001))
 
 ```
 
 
-`polpc` as it can be seen in the table, this variable only became significant after more variables were introduced in model 2 and 3. This may be due to the omitted variable effect that `prbconv` had on `polpc`. We believe that higher `prbconv` would result in lower `crmrte` while higher `polpc` would result in higher `prbconv`. Therefore, the omitted variable bias would be negative and scale the OLS coefficient on `polpc` towards 0. This would cause the marginal effect of `polpc` to be underestimated. By introducing `prbconv` in model 2, we are negating this omitted variable bias which is why `polpc` became statistically significant. The slope coefficient of `polpc` has a positive slope which suggests that counties with higher police per capita would have a higher crime rate, which seems to be counter intuitive. It is possible that counties with higher crime rates are hiring more policemen in hopes of decreasing crime, but the presence of these extra policemen does not have the impact on crime rate that they hoped. Therefore increasing the police force may not be the most effective policy to decrease the crime rate
+`polpc` as it can be seen in the table, this variable only became significant after more variables were introduced in model 2 and 3. This may be due to the omitted variable effect that `prbconv` had on `polpc`. We believe that higher `prbconv` would result in lower `crmrte` while higher `polpc` would result in higher `prbconv`. Therefore, the omitted variable bias would be negative and scale the OLS coefficient on `polpc` towards 0. This would cause the marginal effect of `polpc` to be underestimated. By introducing `prbconv` in model 2, we are negating this omitted variable bias which is why `polpc` became statistically significant. The slope coefficient of `polpc` has a positive slope which suggests that counties with higher police per capita would have a higher crime rate, which seems to be counter intuitive. It is possible that counties with higher crime rates are hiring more policemen in hopes of decreasing crime, but the presence of these extra policemen does not have the impact on crime rate that they hoped. Therefore increasing the police force may not be the most effective policy to decrease the crime rate.
 
-`prbarr` became more significant, and the slope coefficient became more negative in model 2 and model 3. This may be due to the omitted variable effect that `prbconv` had on `prbarr`. We believe that higher `prbconv` would lead to lower `crmrte`, while higher `prbarr` would result in lower `prbconv`. This can be interpreted that being overzealous in arrest may lead to a lower conviction rate. Therefore, the omitted variable bias would be positive and scale the OLS coefficient on `prbarr` towards 0. This would cause the marginal effect of `prbarr` to be underestimated. By introducing `prbconv` in model 2, we are negating this omitted variable bias which is why `prbarr` became more statistically significant. So practically, the model suggests that we need to reach a level of balance between arrests and conviction.
+`prbarr` became more significant, and the slope coefficient became more negative in model 2 and model 3. This may be due to the omitted variable effect that `prbconv` had on `prbarr`. We believe that higher `prbconv` would lead to lower `crmrte`, while higher `prbarr` would result in lower `prbconv`. This can be interpreted as when policemen are being overzealous in making arrests, we are getting a lower conviction rate. Therefore, the omitted variable bias would be positive and scale the OLS coefficient on `prbarr` towards 0. This would cause the marginal effect of `prbarr` to be underestimated. By introducing `prbconv` in model 2, we are negating this omitted variable bias which is why `prbarr` became more statistically significant. So practically, the model suggests that we need to reach a level of balance between arrests and conviction.
 
-`prbconv` when introduced to the model, this variable was significant, and it has a negative slope. This indicates that a higher probability of conviction results in a lower crime rate. Practically, this means that a higher likelihood of conviction may deter people from comitting crime. 
+`prbconv`, when introduced to the model, is shown to be a significant variable with a negative slope. This indicates that a higher probability of conviction results in a lower crime rate. Practically, this means that a higher likelihood of conviction may deter people from comitting crime. 
 
-`pctymle` this variable did not become significant until model 3, when additional variables were introduced. This may be due to the nuance that the wage variables have, and how they might impact the young men population. Practically, this can be interpreted as: when wages are low and there is a high percentage of young men in a county, then the young men may have more incentive to commit crimes. There may be an omitted variable effect on the `pctymle` by the wages variables. Upon closer inspection of the various wage variables, `wsta`, `wser` and `wmfg` while not significant, do have negative slopes. From a practical stand point,perhaps young men tend to have state, service and/or manufacturing jobs, and the higher the wages for those three industries, the less incentive there is for the young men to commit crime.
+`pctymle` did not become significant until model 3, when additional variables were introduced. This may be due to the nuance that the wage variables have, and how they might impact the young men population. Practically, this can be interpreted as: when wages are low and there is a high percentage of young men in a county, then the young men may have more incentive to commit crimes. There may be an omitted variable effect on the `pctymle` by the wages variables. Upon closer inspection of the various wage variables, `wsta`, `wser` and `wmfg` while not significant, do have negative slopes. From a practical stand point,perhaps young men tend to have state, service and/or manufacturing jobs, and the higher the wages for those three industries, the less incentive there is for the young men to commit crime.
 
 # 4.4 Model Selection and Assessment
 
-To DO: We need justification of why model 2 was chosen
-TO DO: detailed assessment of the 6 CLM
-TO DO: other diagnostic tools to assess whether the assumptions appear to be violated.
 TO DO: create model 4, and discuss why it is not worth it to add additional variables to the model (i.e. because the model do not improve in a statistically significant way), this may be due to omitted variable bias from a variable that is not included in the data set, and then segway from here to the omitted variable discussion.
 
 **Justification**
@@ -434,19 +431,28 @@ waldtest(model1, model2, vcov = vcovHC)
 waldtest(model2, model3, vcov = vcovHC)
 ```
 
-The addition of the `pctymle` and `prbconv` in model 2 improved the model in a statistically significant way. However the addition of variables in model 3 are not jointly significant when compared against model 2.
+The addition of the `pctymle` and `prbconv` in model 2 improved the model in a statistically significant way. However, the addition of variables in model 3 are not jointly significant when compared against model 2.
 
-the AIC test, reveals that model 2 has the lowest AIC values, indicating that it is the best fitting model for the data set among the three models that were created.
+the AIC test shown below, reveals that model 2 has the lowest AIC values, indicating that it is the best fitting model for the data set among the three models that were created.
 
-Based on the Shapiro-Wilkes test, we can reject the null hypothesis of normal distribution for model 1, but not for model 2. While model 1 fails 
-the normality assumption, model 2 does not.
+```{R}
+AIC(model1)
+AIC(model2)
+AIC(model3)
+```
+
+Based on the Shapiro-Wilkes test shown below, we can reject the null hypothesis of normal distribution for model 1, but not for model 2. While model 1 fails the normality assumption, model 2 does not.
 
 ```{R}
 shapiro.test(model1$residuals)
 shapiro.test(model2$residuals)
 ```
 
-Model 2 also has the best standardized residual vs. leverage plot, where it has the least amount of data points that have standardized residuals greater than 2. In addition, unlike model 1 and 3, model 2 do not have any data points that has Cook's distance greater than 1 as it can be seen in the Residuals vs. Leverage plots above. This indicates that model 2 is not strongly influenced by any particular data point.
+Model 2 also has the best standardized residual vs. leverage plot, where it has the least amount of data points that have standardized residuals greater than 2. In addition, unlike model 1 and 3, model 2 does not have any data points that has a Cook's distance greater than 1 as it can be seen in the Residuals vs. Leverage plots below. This indicates that model 2 is not strongly influenced by any particular data point.
+
+```{R}
+plot(model2, 5)
+```
 
 **CLM Assumption Diagnostics**
 
